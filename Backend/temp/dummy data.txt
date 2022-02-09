@@ -74,4 +74,4 @@ Timetables:
 Leaves: 
     id      studentID       date                reason                approval
     1       1801001         12/02/2022      medical checkup             TRUE
-    2       1804069         18/03/2022      none                        FALSE
+    2       1804069         18/03/2022      none                        TRUE
