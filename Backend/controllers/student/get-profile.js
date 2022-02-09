@@ -3,6 +3,9 @@ const db = require('../../models');
 module.exports = (async (req, res) => {
     let input = req.body;
     let response = {};
+
+    if(input.rollNo !== req.student.rollNo) return res.status(400).send('Invalid auth token.');
+
     let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId FROM students WHERE rollNo = ${input.rollNo}`;
 
     try {

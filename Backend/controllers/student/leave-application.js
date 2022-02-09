@@ -3,6 +3,9 @@ const db = require('../../models');
 module.exports = (async (req, res) => {
     let input = req.body;
     let studentId = input.studentId, date = input.date, reason = input.reason, isApproved = null;
+
+    if(studentId !== req.student.id) return res.status(400).send('Invalid auth token.');
+
     let response = {};
     let query = `INSERT INTO leaveApplications(studentId, date, reason, isApproved) VALUES(${studentId},"${date}", "${reason}", null);`;
 
