@@ -52,6 +52,13 @@ module.exports = (sequelize, DataTypes) => {
         model: 'departments',
         key: 'id'
       }
+    },
+    address: {
+      type: DataTypes.STRING,
+    },
+    bloodGroup: {
+      type: DataTypes.ENUM,
+      values: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
     }
   }, {
     sequelize,

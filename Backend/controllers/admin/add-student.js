@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+
     let rollNo = input.rollNo, firstName = input.firstName, lastName = input.lastName, email = input.email, 
                 password = input.password, semester = input.semester, departmentId = input.departmentId;
 
