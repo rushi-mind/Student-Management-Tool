@@ -16,9 +16,16 @@ module.exports = {
           key: 'id'
         }
       },
-      date: {
+      dateFrom: {
         type: Sequelize.DATEONLY,
         allowNull: false
+      },
+      dateTo: {
+        type: Sequelize.DATEONLY,
+        allowNull: false
+      },
+      duration: {
+        type: Sequelize.INTEGER
       },
       reason: {
         type: Sequelize.TEXT

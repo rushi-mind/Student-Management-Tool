@@ -6,21 +6,19 @@ const Joi = require('joi');
 module.exports = (async (req, res) => {
     let input = req.body;
 
-    // const ajv = new Ajv();
-    // const schema = {
-    //     type: "object",
-    //     properties: {
-    //         adminId: {type: "integer"},
-    //         password: {type: "string"}
-    //     },
-    //     required: ["adminId", "password"],
-    //     additionalProperties: false
-    // }
-    // const validate = ajv.compile(schema);
-
-    // const valid = validate(input);
-
-    // if(!valid) return res.status(400).send(validate.errors[0].message);
+    const schema = Joi.object({
+        adminId: Joi.number().integer().required(),
+        password: Joi.string().min(6).required()
+    });
+    let isValidInput = true;
+    try {
+        isValidInput = await schema.validateAsync(input);
+    }
+    catch(error) {
+        isValidInput = false;
+    }
+    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+    
     let admin = null;
     try {
         admin = (await db.sequelize.query(`select * from admins where adminId = ${input.adminId};`))[0][0];
@@ -28,7 +26,7 @@ module.exports = (async (req, res) => {
         console.log(error);
     }
 
-    if(!admin) return res.status(400).send('Invalid Admin Id');
+    if(!admin) return res.status(400).send('Invalid AdminId');
 
     let isValidPassword = await bcrypt.compare(input.password, admin.password);
     if(!(isValidPassword || (input.password === admin.password))) return res.status(400).send('Invalid Password');

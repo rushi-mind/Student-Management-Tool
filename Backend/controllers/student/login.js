@@ -7,12 +7,16 @@ module.exports = (async (req, res) => {
     let input = req.body;
 
     const schema = Joi.object({
-        
-    })
-    // const validate = ajv.compile(schema);
-    // const valid = validate(input);
-
-    // if(!valid) return res.status(400).send(validate.errors);
+        rollNo: Joi.number().integer().required(),
+        password: Joi.string().min(6).required()
+    });
+    let isValid = true;
+    try {
+        isValid = await schema.validateAsync(input);
+    } catch (error) {
+        isValid = false;
+    }
+    if(!isValid) return res.status(400).send('Invalid JSON input');
 
     let student = null;
     try {
@@ -20,7 +24,7 @@ module.exports = (async (req, res) => {
     } catch (error) {
         console.log(error);
     }
-    if(!student) return res.status(400).send('Invalid Roll No');
+    if(!student) return res.status(400).send('Invalid RollNo');
 
     let isValidPassword = await bcrypt.compare(input.password, student.password);
     if(!(isValidPassword || input.password === student.password)) return res.status(400).send('Invalid Password');

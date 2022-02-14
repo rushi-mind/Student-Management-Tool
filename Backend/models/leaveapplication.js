@@ -2,13 +2,8 @@
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class LeaveApplication extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+
     }
   }
   LeaveApplication.init({
@@ -26,9 +21,16 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     },
-    date: {
+    dateFrom: {
       type: DataTypes.DATEONLY,
       allowNull: false
+    },
+    dateTo: {
+      type: DataTypes.DATEONLY,
+      allowNull: false
+    },
+    duration: {
+      type: DataTypes.INTEGER
     },
     reason: {
       type: DataTypes.TEXT

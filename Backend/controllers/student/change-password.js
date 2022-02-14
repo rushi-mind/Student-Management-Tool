@@ -1,19 +1,34 @@
 const db = require('../../models');
 const bcrypt = require('bcrypt');
+const Joi = require('joi');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+
+    if(req.student.rollNo !== input.rollNo) return res.status(400).send('Invalid auth token.');
+
+    const schema = Joi.object({
+        rollNo: Joi.number().integer().required(),
+        oldPassword: Joi.string().min(6).required(),
+        newPassword: Joi.string().min(6).required()
+    });
+    let isValidInput = true;
+    try {
+        isValidInput = await schema.validateAsync(input);
+    } catch (error) {
+        isValidInput = false;
+    }
+    if(!isValidInput) return res.status(400).send('Invalid JOSN input');
+
     let rollNo = input.rollNo, enteredOldPassword = input.oldPassword, newPassword = input.newPassword;
 
-    if(req.student.rollNo !== rollNo) return res.status(400).send('Invalid auth token.');
 
     let response = {};
 
-    
     let actualPassword = (await db.sequelize.query(`select password from students where rollNo = ${rollNo};`))[0][0]['password'];
-    let isValid = await bcrypt.compare(enteredOldPassword, actualPassword);
-    if(isValid) {
+    let isValidPassword = await bcrypt.compare(enteredOldPassword, actualPassword);
 
+    if(isValidPassword || ((actualPassword === rollNo.toString()) && enteredOldPassword === rollNo.toString())) {
         let salt = await bcrypt.genSalt(10);
         let hashedPassword = await bcrypt.hash(newPassword, salt);
 

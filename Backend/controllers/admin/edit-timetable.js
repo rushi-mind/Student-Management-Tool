@@ -2,6 +2,9 @@ const db = require('../../models');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+
+    if(req.admin.role !== 'admin') return res.status(403).send(`Teacher cannot add/edit timetable`);
+
     let semester = input.semester, departmentId = input.departmentId, lectures = input.lectures;
     let response = {};
     let IDs = [];

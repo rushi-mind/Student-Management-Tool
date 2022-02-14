@@ -1,7 +1,28 @@
+const Joi = require('joi');
 const db = require('../../models');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+
+    const schema = Joi.object({
+        id: Joi.number().integer().required(),
+        updateFields: Joi.object({
+            name: Joi.string().required(),
+            semester: Joi.number().integer().min(1).max(8).required(),
+            departmentId: Joi.number().integer().required(),
+            deadline: Joi.date().greater('now').required()
+        })
+    });
+    let isValidInput = true;
+    try {
+        isValidInput = await schema.validateAsync(input);
+    }
+    catch(error) {
+        isValidInput = false;
+    }
+    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+
+
     let id = input.id, updateFields = input.updateFields;
     let query = `UPDATE assignments SET`;
     if(updateFields.name) query += ` name = "${updateFields.name}",`;
@@ -16,6 +37,7 @@ module.exports = (async (req, res) => {
         let [result, metadata] = await db.sequelize.query(query);
         response.status = 'ok';
         response.message = 'Assignment updated successfully.';
+        response.data = result;
     } catch (error) {
         res.status(400);
         response.status = 'fail';
