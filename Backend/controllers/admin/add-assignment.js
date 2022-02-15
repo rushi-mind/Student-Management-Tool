@@ -1,13 +1,12 @@
 const db = require('../../models');
 const Joi = require('joi');
+const fs = require('fs');
 
 module.exports = async (req, res) => {
     let input = req.body;
-
-    if(input.adminId !== req.admin.adminId) return res.status(400).send(`Invalid Auth Token`);
+    let response = {};
 
     const schema = Joi.object({
-        adminId: Joi.number().integer().required(),
         name: Joi.string().required(),
         semester: Joi.number().integer().min(1).max(8).required(),
         departmentId: Joi.number().integer().required(),
@@ -19,13 +18,19 @@ module.exports = async (req, res) => {
     }
     catch(error) {
         isValidInput = false;
+        response.status = 'fail';
+        response.message = error.details[0]['message'];
+        try {
+            fs.unlinkSync(`public/assignments/${req.file.filename}`);
+        } catch(error) {
+            console.log(error);
+        }
     }
-    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+    if(!isValidInput) return res.status(400).send(response);
 
-    let name = input.name, semester = input.semester, departmentId = input.departmentId, deadline = input.deadline;
-
+    let { name, semester, departmentId, deadline } = input;
     let query = `INSERT INTO assignments(name, semester, departmentId, deadline) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}");`;
-    let response = {};
+    
     try {
         const [result, metadata] = await db.sequelize.query(query);
         response.status = 'ok';

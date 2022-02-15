@@ -4,8 +4,9 @@ const Joi = require('joi');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let response = {};
 
-    if(req.admin.role !== 'admin') return res.status(403).send('Only admin has access to perform this operation');
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required(),
@@ -15,37 +16,44 @@ module.exports = (async (req, res) => {
         password: Joi.string().required(),
         semester: Joi.number().integer().min(1).max(8),
         departmentId: Joi.number().integer().min(1),
-        address: Joi.string(),
-        bloodGroup: Joi.string()
+        address: Joi.string().required(),
+        bloodGroup: Joi.string().required()
     });
     let isValidInput = true;
     try {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
+        response.status = 'fail';
+        response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+    if(!isValidInput) return res.status(400).send(response);
 
-    let {rollNo, firstName, lastName, email, password, semester, departmentId, address, bloodGroup} = input;
+    let { rollNo, firstName, lastName, email, password, semester, departmentId, address, bloodGroup } = input;
 
     let salt = await bcrypt.genSalt(10);
     let hashedPassword = await bcrypt.hash(password, salt);
-    
-    let addQuery = 
-        `INSERT INTO students(rollNo, firstName, lastName, email, password, semester, departmentId, address, bloodGroup, profileImagePath) VALUES(${rollNo}, "${firstName}", "${lastName}", "${email}", "${hashedPassword}", ${semester}, ${departmentId}, "${address}", "${bloodGroup}", null);`;
-
-    let response = {};
 
     try {
-        const [result, metadata] = await db.sequelize.query(addQuery);
-        console.log(result, metadata);
+        await db.Student.create({
+            rollNo,
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            semester,
+            departmentId,
+            address,
+            bloodGroup
+        });
         res.status(200);
         response.status = 'ok';
         response.input = input;
         response.message = `Student added successfully`;
-    } catch (error) {
+    } catch(error) {
         res.status(400);
         response.status = 'fail';
+        console.log(error);
         response.error = error.errors;
     }
     res.send(response);

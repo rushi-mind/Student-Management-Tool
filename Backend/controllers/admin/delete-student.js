@@ -4,6 +4,7 @@ const fs = require('fs');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let response = {};
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required()
@@ -13,29 +14,23 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
+        response.status = 'fail';
+        response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+    if(!isValidInput) return res.status(400).send(response);
 
     let query = `DELETE FROM students WHERE rollNo = ${input.rollNo};`;
 
-    let response = {};
     try {
-        let student = (await db.sequelize.query(`select * from students where rollNo = ${input.rollNo}`))[0];
-        if(student.length) {
-            let [result, metadata] = await db.sequelize.query(query);
-            console.log(result, metadata);
+        let student = (await db.sequelize.query(`select rollNo, firstName, lastName, semester, departmentId from students where rollNo = ${input.rollNo}`))[0][0];
+        if(student) {
+            await db.sequelize.query(query);
             res.status(200);
             response.status = 'ok';
             response.message = 'Student deleted successfully.';
-            response.student = {};
-            response.student.rollNo = student.rollNo;
-            response.student.firstName = student.firstName;
-            response.student.lastName = student.lastName;
-            response.student.semester = student.semester;
-            response.student.departmentId = student.departmentId;
-
+            response.student = student;
             try {
-                fs.unlinkSync(`public/profile-images/students/${rollNo}.jpg`);
+                fs.unlinkSync(`public/profile-images/students/${student.rollNo}.jpg`);
             } catch (error) {
                 console.log(error);
             }

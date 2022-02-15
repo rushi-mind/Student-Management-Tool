@@ -20,7 +20,7 @@ module.exports = (async (req, res) => {
     let response = {};
 
 
-    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, profileImagePath FROM students WHERE rollNo = ${input.rollNo}`;
+    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, profileImagePath FROM students WHERE rollNo = ${input.rollNo};`;
 
     try {
         let [result, metadata] = await db.sequelize.query(query);
@@ -38,10 +38,10 @@ module.exports = (async (req, res) => {
         response.semester = result[0].semester;
         response.address = result[0].address;
         response.bloodGroup = result[0].bloodGroup;
-        if(result[0].profileImagePath === null) response.profileImage = `http://192.168.1.169:5000/profile-images/default.png`;
-        else response.profileImage = `http://192.168.1.169:5000/${profileImagePath}`;
         let department = (await db.sequelize.query(`select name from departments where id = ${result[0]['departmentId']};`))[0];
         response.department = department[0].name;
+        if(!result[0].profileImagePath) response.profileImage = `http://192.168.1.169:5000/profile-images/default.png`;
+        else response.profileImage = `http://192.168.1.169:5000/profile-images/students/${result[0].profileImagePath}`;
     } catch (error) {
         res.status(400);
         response.status = 'fail';

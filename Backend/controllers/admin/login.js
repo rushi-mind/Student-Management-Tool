@@ -5,6 +5,7 @@ const Joi = require('joi');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let response = {};
 
     const schema = Joi.object({
         adminId: Joi.number().integer().required(),
@@ -16,8 +17,10 @@ module.exports = (async (req, res) => {
     }
     catch(error) {
         isValidInput = false;
+        response.status = 'fail';
+        response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send('Invalid JSON input');
+    if(!isValidInput) return res.status(400).send(response);
     
     let admin = null;
     try {
@@ -26,10 +29,10 @@ module.exports = (async (req, res) => {
         console.log(error);
     }
 
-    if(!admin) return res.status(400).send('Invalid AdminId');
+    if(!admin) return res.status(400).send({ status: 'fail', message: 'Invalid AdminId' });
 
     let isValidPassword = await bcrypt.compare(input.password, admin.password);
-    if(!(isValidPassword || (input.password === admin.password))) return res.status(400).send('Invalid Password');
+    if(!(isValidPassword || (input.password === admin.password))) return res.status(400).send({ status: 'fail', message: 'Invalid Password' });
 
     const payload = {
         _id: admin._id,
@@ -39,13 +42,11 @@ module.exports = (async (req, res) => {
     };
     
     const token = jwt.sign(payload, process.env.jwtPrivateKey);
-    let response = {
-        token: token,
-        data: {
-            adminId: admin.adminId,
-            role: admin.role,
-            email: admin.email
-        }
-    }
+    response.token = token;
+    response.data = {
+        adminId: admin.adminId,
+        role: admin.role,
+        email: admin.email
+    };
     res.send(response);
 });

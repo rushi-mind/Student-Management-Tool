@@ -1,23 +1,45 @@
 const db = require('../../models');
+const Joi = require('joi');
 
 module.exports = (async (req, res) => {
     let input = req.body;
-
-    if(req.admin.role !== 'admin') return res.status(403).send(`Teacher cannot add/edit timetable`);
-
-    let semester = input.semester, departmentId = input.departmentId, lectures = input.lectures;
     let response = {};
+
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Admin only can ADD/EDIT timetables' });
+
+    const schema = Joi.object({
+        departmentId: Joi.number().integer().min(1).required(),
+        semester: Joi.number().integer().min(1).max(8).required(),
+        lectures: Joi.array().required()
+    });
+    let isValidInput = true;
+    try {
+        isValidInput = await schema.validateAsync(input); 
+    } catch (error) {
+        isValidInput = false;
+        response.status = 'fail';
+        response.message = error.details[0]['message'];
+    }
+    if(!isValidInput) return res.status(400).send(response);
+
+    let { departmentId, semester, lectures } = input;
+    
     let IDs = [];
     let tempIDs;
+
+    isValidInput = true;
     try {
         tempIDs = (await db.sequelize.query(`select id from timetable where semester = ${semester} and departmentId = ${departmentId};`))[0];
     } catch (error) {
-        res.status(400);
+        isValidInput = false;
         response.status = 'fail';
         response.message = "Invalid JSON input";
-        res.send(response);
-        return;
     }
+    if(!isValidInput) return res.status(400).send(response);
+    
+    tempIDs.forEach(current => {
+        IDs.push(current.id);
+    });
     
     if(!IDs.length) {
         res.status(400);
@@ -30,8 +52,8 @@ module.exports = (async (req, res) => {
     let i = 0;
     lectures.forEach(async (lecture) => {
         let obj = {
-            departmentId: departmentId,
-            semester: semester,
+            departmentId,
+            semester,
             lectureNo: lecture.lectureNo,
             Monday: lecture.Monday,
             Tuesday: lecture.Tuesday,
@@ -39,16 +61,7 @@ module.exports = (async (req, res) => {
             Thursday: lecture.Thursday,
             Friday: lecture.Friday
         };
-        try {
-            await db.Timetable.update(obj, {where: {id:IDs[i++]}});
-        } catch (error) {
-            res.status(400);
-            response.status = 'fail';
-            response.message = error;
-            console.log(error);
-            res.send(response);
-            return;
-        }
+        await db.Timetable.update(obj, {where: {id:IDs[i++]}});
     });
     response.status = 'ok';
     response.message = 'Timetalbe updated successfully.';
