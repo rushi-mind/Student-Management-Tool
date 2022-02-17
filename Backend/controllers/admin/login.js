@@ -2,6 +2,7 @@ const db = require('../../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -17,11 +18,11 @@ module.exports = (async (req, res) => {
     }
     catch(error) {
         isValidInput = false;
-        response.status = 'fail';
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
     
+
     let admin = null;
     try {
         admin = (await db.sequelize.query(`select * from admins where adminId = ${input.adminId};`))[0][0];
@@ -29,10 +30,11 @@ module.exports = (async (req, res) => {
         console.log(error);
     }
 
-    if(!admin) return res.status(400).send({ status: 'fail', message: 'Invalid AdminId' });
+    if(!admin) return responses.errorResponseWithoutData(res, 'Invalid AdminId', 0, 200);
 
     let isValidPassword = await bcrypt.compare(input.password, admin.password);
-    if(!(isValidPassword || (input.password === admin.password))) return res.status(400).send({ status: 'fail', message: 'Invalid Password' });
+    if(!(isValidPassword || (input.password === admin.password))) return responses.errorResponseWithoutData(res, 'Invalid Password', 0, 200);
+
 
     const payload = {
         _id: admin._id,
@@ -40,13 +42,6 @@ module.exports = (async (req, res) => {
         email: admin.email,
         role: admin.role
     };
-    
     const token = jwt.sign(payload, process.env.jwtPrivateKey);
-    response.token = token;
-    response.data = {
-        adminId: admin.adminId,
-        role: admin.role,
-        email: admin.email
-    };
-    res.send(response);
+    responses.successResponseData(res, payload, 1, 'logged in', { token });
 });

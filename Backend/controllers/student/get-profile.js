@@ -1,10 +1,12 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let response = {};
 
-    if(input.rollNo !== req.student.rollNo) return res.status(400).send('Invalid auth token');
+    if (input.rollNo !== req.student.rollNo) return responses.validationErrorResponseData(res, 'Invalid auth token', 400);
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required()
@@ -14,41 +16,27 @@ module.exports = (async (req, res) => {
         isValid = await schema.validateAsync(input);
     } catch (error) {
         isValid = false;
+        responses.message = error.details[0]['message'];
     }
-    if(!isValid) return res.status(400).send('Invalid JSON input');
-
-    let response = {};
+    if (!isValid) return responses.validationErrorResponseData(res, response.message, 400);
 
 
     let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, profileImagePath FROM students WHERE rollNo = ${input.rollNo};`;
 
     try {
-        let [result, metadata] = await db.sequelize.query(query);
-        if(!result.length) {
-            res.status(400);
-            response.status = 'fail';
-            response.message = 'Student does not exist';
-            res.send(response);
-            return;
-        }
-        response.rollNo = result[0].rollNo;
-        response.firstName = result[0].firstName;
-        response.lastName = result[0].lastName;
-        response.email = result[0].email;
-        response.semester = result[0].semester;
-        response.address = result[0].address;
-        response.bloodGroup = result[0].bloodGroup;
-        let department = (await db.sequelize.query(`select name from departments where id = ${result[0]['departmentId']};`))[0];
-        response.department = department[0].name;
-        if(!result[0].profileImagePath) response.profileImage = `http://192.168.1.169:5000/profile-images/default.png`;
-        else response.profileImage = `http://192.168.1.169:5000/profile-images/students/${result[0].profileImagePath}`;
-    } catch (error) {
-        res.status(400);
-        response.status = 'fail';
-        response.message = 'Invalid JSON input';
-        res.send(response);
-        return;
-    }
+        let result = (await db.sequelize.query(query))[0][0];
+        if (result) {
+            let department = (await db.sequelize.query(`select name from departments where id = ${result.departmentId};`))[0][0]['name'];
+            result.department = department;
 
-    res.send(response);
+            if (result.profileImagePath) result.profileImagePath = `http://192.168.1.169:5000/profile-images/students/${result.profileImagePath}`;
+            else result.profileImagePath = `http://192.168.1.169:5000/profile-images/default.png`;
+
+            responses.successResponseData(res, result, 1, 'Pfofile fetched successfully', null);
+        }
+        else responses.errorResponseWithoutData(res, 'Invalid RollNo Entered', 0, 200);
+    } catch (error) {
+        response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
+    }
 });

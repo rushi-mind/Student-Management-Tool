@@ -1,6 +1,7 @@
 const db = require('../../models');
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -24,10 +25,12 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
+        response.code = 400;
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
+
+
 
     let { rollNo, firstName, lastName, email, password, semester, departmentId, address, bloodGroup } = input;
 
@@ -45,16 +48,18 @@ module.exports = (async (req, res) => {
             departmentId,
             address,
             bloodGroup
+        }, { 
+            fields: [
+                'rollNo', 'firstName', 'lastName', 'email', 'password', 'semester', 'departmentId', 'address', 'bloodGroup'
+            ] 
         });
-        res.status(200);
-        response.status = 'ok';
-        response.input = input;
-        response.message = `Student added successfully`;
+        response.message = 'Student added successfully';
+        response.code = 1;
+        responses.successResponseWithoutData(res, response.message, response.code);
     } catch(error) {
-        res.status(400);
-        response.status = 'fail';
-        console.log(error);
-        response.error = error.errors;
+        response.message = error.parent.sqlMessage;
+        response.code = 0;
+        response.status = 200;
+        responses.errorResponseWithoutData(res, response.message, response.code, response.status);
     }
-    res.send(response);
 });

@@ -1,5 +1,6 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -17,10 +18,12 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input); 
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
+        response.code = 400;
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
+
+
 
     let { departmentId, semester, lectures } = input;
 
@@ -29,12 +32,11 @@ module.exports = (async (req, res) => {
         let temp = (await db.sequelize.query(`select * from timetable where departmentId = ${departmentId} and semester = ${semester};`))[0];
         if(temp.length) throw new Error('Timetable already exists');
     } catch (error) {
-        isValidInput = false;
-        response.status = 'fail';
-        response.message = 'Timetable already exists';
+        isValidInput = false;    
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.errorResponseWithoutData(res, 'Timetable already exists', 0, 200);
     
+    let timetableArray = [];
     lectures.forEach(async (lecture) => {
         let obj = {
             departmentId,
@@ -46,19 +48,20 @@ module.exports = (async (req, res) => {
             Thursday: lecture.Thursday,
             Friday: lecture.Friday
         };
-        let isSuccess = true;
-        try {
-            let temp = await db.Timetable.create(obj, { fields: ['departmentId', 'semester', 'lectureNo', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] });
-        } catch (error) {
-            isSuccess = false;
-            res.status(400);
-            response.status = 'fail';
-            response.message = error.parent.sqlMessage;
-        }
-        if(!isSuccess) return res.status(400).send(response);
+        timetableArray.push(obj);
     });
-    response.status = 'ok';
-    response.message = 'Timetalbe uploaded sucessfully.';
 
-    res.send(response);
+    try {
+        db.Timetable.bulkCreate(
+            timetableArray, 
+            { 
+                fields: [
+                    'departmentId', 'semester', 'lectureNo', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
+                ] 
+            }
+        );
+        responses.successResponseWithoutData(res, 'Timetalbe uploaded sucessfully', 1);
+    } catch (error) {
+        responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
+    }
 });

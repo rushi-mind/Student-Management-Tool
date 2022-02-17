@@ -1,5 +1,6 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -21,10 +22,11 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
+
+
 
     let { rollNo, firstName, lastName, semester, departmentId, address, bloodGroup } = input;
 
@@ -32,15 +34,15 @@ module.exports = (async (req, res) => {
     try{
         let student = (await db.sequelize.query(`select * from students where rollNo = ${rollNo};`))[0][0];
         if(!student) {
-            response.status = 'fail';
-            response.message = 'Invalid RollNo';
             isValidRollNo = false;
+            response.message = 'Invalid RollNo';
         }
     } catch(error) {
         isValidRollNo = false;
         console.log(error);
     }
-    if(!isValidRollNo) return res.status(400).send(response);
+    if(!isValidRollNo) return responses.errorResponseWithoutData(res, response.message, 0, 200);
+
 
     try {
         await db.Student.update({
@@ -56,13 +58,10 @@ module.exports = (async (req, res) => {
                 rollNo
             }
         });
-        response.status = 'ok';
         response.message = 'Student updated successfully.';
-        response.input = input;
+        responses.successResponseWithoutData(res, response.message, 1);
     } catch(error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
-    res.send(response);
 });

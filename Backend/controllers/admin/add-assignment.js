@@ -1,6 +1,7 @@
 const db = require('../../models');
 const Joi = require('joi');
 const fs = require('fs');
+const responses = require('../responses');
 
 module.exports = async (req, res) => {
     let input = req.body;
@@ -18,7 +19,7 @@ module.exports = async (req, res) => {
     }
     catch(error) {
         isValidInput = false;
-        response.status = 'fail';
+        response.code = 400;
         response.message = error.details[0]['message'];
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
@@ -26,21 +27,25 @@ module.exports = async (req, res) => {
             console.log(error);
         }
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
+
+
+
 
     let { name, semester, departmentId, deadline } = input;
-    let query = `INSERT INTO assignments(name, semester, departmentId, deadline) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}");`;
+    let query = ``;
+    if(req.file) query = `INSERT INTO assignments(name, semester, departmentId, deadline, filePath) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}", "${req.file.filename}");`;
+    else query = `INSERT INTO assignments(name, semester, departmentId, deadline) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}");`;
     
     try {
-        const [result, metadata] = await db.sequelize.query(query);
-        response.status = 'ok';
-        response.input = input;
-        res.status(200);
+        await db.sequelize.query(query);
+        response.message = 'Assignment inserted successfully';
+        response.code = 1;
+        responses.successResponseWithoutData(res, response.message, response.code);
     } catch(error) {
-        res.status(400);
-        response.status = 'fail';
-        response.message = 'Invalid JSON input';
-        response.error = error.parent.sqlMessage;
+        response.message = error.parent.sqlMessage;
+        response.code = 0;
+        response.status = 200;
+        responses.errorResponseWithoutData(res, response.message, response.code, response.status);
     }
-    res.send(response);
 };

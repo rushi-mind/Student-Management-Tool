@@ -1,5 +1,6 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -20,10 +21,10 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
+
 
     let { semester, departmentId, pageNumber, pageSize, sort } = input;
 
@@ -31,14 +32,10 @@ module.exports = (async (req, res) => {
 
     try {
         const students = (await db.sequelize.query(query))[0];
-        const totalStudents = (await db.sequelize.query(`select count(id) as total from students where semester = ${semester} and departmentId = ${departmentId};`))[0][0]['total'];
-        response.status = 'ok';
-        response.totalResults = totalStudents;
-        response.data = students;
+        const totalRecords = (await db.sequelize.query(`select count(id) as total from students where semester = ${semester} and departmentId = ${departmentId};`))[0][0]['total'];
+        responses.successResponseData(res, students, 1, 'Students fetched successfully', { totalRecords });
     } catch (error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
-    res.send(response);
 });

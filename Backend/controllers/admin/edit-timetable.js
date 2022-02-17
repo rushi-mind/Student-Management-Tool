@@ -1,5 +1,6 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -17,13 +18,12 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input); 
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
+
 
     let { departmentId, semester, lectures } = input;
-    
     let IDs = [];
     let tempIDs;
 
@@ -32,21 +32,17 @@ module.exports = (async (req, res) => {
         tempIDs = (await db.sequelize.query(`select id from timetable where semester = ${semester} and departmentId = ${departmentId};`))[0];
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
         response.message = "Invalid JSON input";
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.errorResponseWithoutData(res, response.message, 0, 200);
     
     tempIDs.forEach(current => {
         IDs.push(current.id);
     });
     
     if(!IDs.length) {
-        res.status(400);
-        response.status = 'fail';
         response.message = "Timetable does not exist.";
-        res.send(response);
-        return;
+        return responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 
     let i = 0;
@@ -63,8 +59,6 @@ module.exports = (async (req, res) => {
         };
         await db.Timetable.update(obj, {where: {id:IDs[i++]}});
     });
-    response.status = 'ok';
     response.message = 'Timetalbe updated successfully.';
-
-    res.send(response);
+    return responses.successResponseWithoutData(res, response.message, 1);
 });

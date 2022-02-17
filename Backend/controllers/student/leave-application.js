@@ -1,5 +1,6 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 const getDateDifferenceInDays = async (dateFrom, dateTo) => {
     let duration = null;
@@ -13,9 +14,12 @@ const getDateDifferenceInDays = async (dateFrom, dateTo) => {
 
 module.exports = (async (req, res) => {
     let input = req.body;
-    let studentId = input.studentId, dateFrom = input.date.from, dateTo = input.date.to, reason = input.reason, isApproved = null;
+    let response = {};
 
-    if(studentId !== req.student.id) return res.status(400).send('Invalid auth token.');
+    let { studentId, date, reason } = input;
+    let dateFrom = date.from, dateTo = date.to;
+
+    if(studentId !== req.student.id) return responses.validationErrorResponseData(res, 'Invalid auth token', 400);
 
     const schema = Joi.object({
         studentId: Joi.number().integer().required(),
@@ -23,32 +27,28 @@ module.exports = (async (req, res) => {
             from: Joi.date().greater('now').required(),
             to: Joi.date().greater(Joi.ref('from')).required()
         }).required(),
-        reason: Joi.string()
+        reason: Joi.string().required()
     });
     let isValidInput = true;
     try {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
+        response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send('Invalid JOSN input');
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-    let response = {};
 
     const duration = await getDateDifferenceInDays(dateFrom, dateTo);
-    if(!duration) return res.status(400).send('Invalid JSON input');
 
     let query = `INSERT INTO leaveApplications(studentId, dateFrom, dateTo, duration, reason, isApproved) VALUES(${studentId},"${dateFrom}", "${dateTo}", ${duration}, "${reason}", null);`;
 
     try {
-        let [result, metadata] = await db.sequelize.query(query);
-        response.status = 'ok';
+        await db.sequelize.query(query);
         response.message = `Applied for leave from ${dateFrom} to ${dateTo}`;
+        responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
-
-    res.send(response);
 });

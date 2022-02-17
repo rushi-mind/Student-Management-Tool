@@ -1,6 +1,7 @@
 const db = require('../../models');
 const Joi = require('joi');
 const fs = require('fs');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -14,10 +15,12 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
-        response.status = 'fail';
+        response.code = 400;
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
+
+
 
     let query = `DELETE FROM students WHERE rollNo = ${input.rollNo};`;
 
@@ -25,10 +28,8 @@ module.exports = (async (req, res) => {
         let student = (await db.sequelize.query(`select rollNo, firstName, lastName, semester, departmentId from students where rollNo = ${input.rollNo}`))[0][0];
         if(student) {
             await db.sequelize.query(query);
-            res.status(200);
-            response.status = 'ok';
-            response.message = 'Student deleted successfully.';
-            response.student = student;
+            response.message = 'Student deleted successfully';
+            responses.successResponseWithoutData(res, response.message, 1);
             try {
                 fs.unlinkSync(`public/profile-images/students/${student.rollNo}.jpg`);
             } catch (error) {
@@ -36,14 +37,11 @@ module.exports = (async (req, res) => {
             }
         }
         else {
-            res.status(400);
-            response.status = 'fail';
             response.message = `${input.rollNo}: Student does not exist.`;
+            responses.errorResponseWithoutData(res, response.message, 0, 200);
         }
     } catch (error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 400);
     }
-    res.send(response);
 });

@@ -1,31 +1,36 @@
 const db = require('../../models');
 const Joi = require('joi');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let response = {};
+
+    if(req.student.rollNo !== input.rollNo) return responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
 
     const schema = Joi.object({
-        semester: Joi.number().integer().min(1).max(8).required(),
-        departmentId: Joi.number().integer().min(1).required()
+        rollNo: Joi.number().integer().required()
     });
     let isValidInput = true;
     try {
         isValidInput = await schema.validateAsync(input);
     } catch (error) {
         isValidInput = false;
+        response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return res.status(400).send('Invalid JOSN input');
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-    let semester = input.semester, departmentId = input.departmentId;
-    let response = {};
-    let query = `SELECT name, deadline FROM assignments WHERE semester = ${semester} AND departmentId = ${departmentId};`;
+
+    let { rollNo } = input; 
     try {
-        let [result, metadata] = await db.sequelize.query(query);
-        response = result;
+        let result = (await db.sequelize.query(`select semester, departmentId from students where rollNo = ${rollNo};`))[0][0];
+        const semester = result.semester, departmentId = result.departmentId;
+        let query = `SELECT name, deadline, CONCAT("http://192.168.1.169:5000/assignments/", filePath) AS fileURL FROM assignments WHERE semester = ${semester} AND departmentId = ${departmentId};`;
+        result = (await db.sequelize.query(query))[0];
+        if(result.length) responses.successResponseData(res, result, 1, 'Assignments fetched successfully', null);
+        else responses.successResponseData(res, result, 1, 'No assignments found', null);
     } catch (error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
-    res.send(response);
 });

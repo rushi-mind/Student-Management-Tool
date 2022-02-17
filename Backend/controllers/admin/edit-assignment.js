@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const db = require('../../models');
 const fs = require('fs');
+const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
@@ -18,9 +19,7 @@ module.exports = (async (req, res) => {
         isValidInput = await schema.validateAsync(input);
     }
     catch(error) {
-        console.log(error);
         isValidInput = false;
-        response.status = 'fail';
         response.message = error.details[0]['message'];
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
@@ -28,7 +27,9 @@ module.exports = (async (req, res) => {
             console.log(error);
         }
     }
-    if(!isValidInput) return res.status(400).send(response);
+    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
+
+
 
     let obj = (await db.sequelize.query(`select * from assignments where id = ${input.id};`))[0];
     if(!obj.length) {
@@ -37,22 +38,20 @@ module.exports = (async (req, res) => {
         } catch(error) {
             console.log(error);
         }
-        return res.status(400).send({ status: 'fail', message: 'Invalid Assignment ID' });
+        return responses.errorResponseWithoutData(res, 'Invalid assignment id', 0, 200);
     }
 
     let { id, name, semester, departmentId, deadline } = input;
-
-    let query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}" WHERE id = ${id};`;
+    let query = ``;
+    if(req.file) query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}", filePath = "${req.file.filename}" WHERE id = ${id};`;
+    else query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}" WHERE id = ${id};`;
 
     try {
-        let [result, metadata] = await db.sequelize.query(query);
-        response.status = 'ok';
+        await db.sequelize.query(query);
         response.message = 'Assignment updated successfully.';
+        responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
-        res.status(400);
-        response.status = 'fail';
         response.message = error.parent.sqlMessage;
+        responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
-
-    res.send(response);
 });

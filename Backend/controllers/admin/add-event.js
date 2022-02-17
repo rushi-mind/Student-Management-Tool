@@ -6,11 +6,12 @@ module.exports = (async (req, res) => {
     let input = req.body;
     let response = {};
 
+    if(req.admin.role !== 'admin') return responses.validationErrorResponseData(res, 'Admin only can add new event', 400);
+    if(!req.file) return responses.validationErrorResponseData(res, 'Image not found', 400);
+
     const schema = Joi.object({
-        dateRange: Joi.object({
-            from: Joi.date().required(),
-            to: Joi.date().greater(Joi.ref('from')).required()
-        }).required()
+        name: Joi.string().required(),
+        date: Joi.date().required()
     });
     let isValidInput = true;
     try {
@@ -20,15 +21,12 @@ module.exports = (async (req, res) => {
         response.message = error.details[0]['message'];
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
-    
 
-    let query = `SELECT date, status FROM attendance WHERE studentId = ${req.student.id} AND date BETWEEN "${input.dateRange.from}" AND "${input.dateRange.to}";`;
 
+    let { name, date } = input;
     try {
-        let result = (await db.sequelize.query(query))[0];
-        response.totalRecords = result.length;
-        response.data = result;
-        responses.successResponseData(res, result, 1, 'Attendance fetched successfully', { totalRecords: response.totalRecords });
+        await db.sequelize.query(`insert into events(name, date, imagePath) values("${name}", "${date}", "${req.file.filename}");`);
+        responses.successResponseWithoutData(res, 'Event added successfully', 1);
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
