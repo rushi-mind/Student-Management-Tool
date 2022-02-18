@@ -8,6 +8,9 @@ module.exports = (async (req, res) => {
     let input = req.body;
     let response = {};
 
+    console.log(input);
+    return res.send('done')
+
     const schema = Joi.object({
         adminId: Joi.number().integer().required(),
         password: Joi.string().min(6).required()

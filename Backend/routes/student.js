@@ -1,9 +1,11 @@
+// Importing required dependencies and files
 const router = require('express').Router();
 const auth = require('../middlewares/auth-student');
 const express = require('express');
 var path = require('path');
 const multer = require('multer');
 
+// Importing route controllers
 const changePassword = require('../controllers/student/change-password');
 const getAssignments = require('../controllers/student/get-assignments');
 const getAttendance = require('../controllers/student/get-attendance');
@@ -13,6 +15,7 @@ const editProfileImage = require('../controllers/student/edit-profile-image');
 const deleteProfileImage = require('../controllers/student/delete-profile-image');
 const login = require('../controllers/student/login');
 
+// -------------------------------------------------------------------------------------------------------------
 let storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'public/profile-images/students/');
@@ -21,16 +24,25 @@ let storage = multer.diskStorage({
         cb(null, (req.student.rollNo).toString() + path.extname(file.originalname));
     }
 });
-
 const upload = multer({ storage: storage });
 
-router.put('/change-password', auth, changePassword);
-router.get('/get-assignments', auth, getAssignments);
-router.get('/get-attendance', auth, getAttendance);
-router.get('/get-profile', auth, getProfile);
+
+// -------------------------------------------------------------------------------------------------------------
+router.get('/get-profile/:rollNo', auth, getProfile);
+router.put('/edit-profile-image/:rollNo', [auth, upload.single('image')], editProfileImage);
+router.put('/change-password/:rollNo', auth, changePassword);
+router.delete('/delete-profile-image/:rollNo', auth, deleteProfileImage);
+
+// -------------------------------------------------------------------------------------------------------------
+router.get('/get-assignments/:rollNo', auth, getAssignments);
+
+// -------------------------------------------------------------------------------------------------------------
 router.post('/leave-application', auth, leaveApplication);
-router.post('/edit-profile-image', [auth, upload.single('image')], editProfileImage);
-router.post('/delete-profile-image', auth, deleteProfileImage);
+
+// -------------------------------------------------------------------------------------------------------------
+router.get('/get-attendance', auth, getAttendance);
+
+// -------------------------------------------------------------------------------------------------------------
 router.post('/login', login);
 
 module.exports = router;

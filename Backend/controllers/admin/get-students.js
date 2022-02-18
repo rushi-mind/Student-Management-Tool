@@ -3,22 +3,24 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.query;
+    let params = req.params;
     let response = {};
 
-    const schema = Joi.object({
+    const schemaParams = Joi.object({
         semester: Joi.number().integer().min(1).max(8).required(),
-        departmentId: Joi.number().integer().min(1).required(),
+        departmentId: Joi.number().integer().min(1).required()
+    });
+    const schemaInput = Joi.object({
         pageNumber: Joi.number().integer().min(1).required(),
         pageSize: Joi.number().integer().min(1).required(),
-        sort: Joi.object({
-            type: Joi.string().required(),
-            by: Joi.string().required()
-        }).required()
+        sortType: Joi.string().required(),
+        sortBy: Joi.string().required()
     });
     let isValidInput = true;
     try {
-        isValidInput = await schema.validateAsync(input);
+        isValidInput = await schemaParams.validateAsync(params);
+        isValidInput = await schemaInput.validateAsync(input);
     } catch (error) {
         isValidInput = false;
         response.message = error.details[0]['message'];
@@ -26,9 +28,10 @@ module.exports = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-    let { semester, departmentId, pageNumber, pageSize, sort } = input;
+    let { pageNumber, pageSize, sortType, sortBy } = input;
+    let { departmentId, semester } = params;
 
-    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sort.by} ${sort.type} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
+    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sortBy} ${sortType} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
 
     try {
         const students = (await db.sequelize.query(query))[0];

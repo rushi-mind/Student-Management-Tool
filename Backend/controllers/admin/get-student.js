@@ -3,7 +3,7 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.params;
     let response = {};
 
     const schema = Joi.object({

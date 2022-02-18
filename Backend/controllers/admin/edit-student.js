@@ -3,13 +3,18 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Only admin has access to perform this operation', 0, 200);
+
     let input = req.body;
     let response = {};
+    let rollNo = req.params.rollNo;
+    try {
+        rollNo = parseInt(rollNo);
+    } catch (error) {}
+    if(!rollNo) return responses.validationErrorResponseData(res, 'RollNo should be number only', 400);
 
-    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
 
     const schema = Joi.object({
-        rollNo: Joi.number().integer().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         semester: Joi.number().integer().min(1).max(8),
@@ -28,7 +33,7 @@ module.exports = (async (req, res) => {
 
 
 
-    let { rollNo, firstName, lastName, semester, departmentId, address, bloodGroup } = input;
+    let { firstName, lastName, semester, departmentId, address, bloodGroup } = input;
 
     let isValidRollNo = true;
     try{

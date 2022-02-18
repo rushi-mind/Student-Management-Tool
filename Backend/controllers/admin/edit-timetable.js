@@ -4,18 +4,22 @@ const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
+    let params = req.params;
     let response = {};
 
     if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Admin only can ADD/EDIT timetables' });
 
-    const schema = Joi.object({
+    const schemaParams = Joi.object({
         departmentId: Joi.number().integer().min(1).required(),
-        semester: Joi.number().integer().min(1).max(8).required(),
+        semester: Joi.number().integer().min(1).max(8).required()
+    });
+    const schema = Joi.object({ 
         lectures: Joi.array().required()
     });
     let isValidInput = true;
     try {
-        isValidInput = await schema.validateAsync(input); 
+        isValidInput = await schema.validateAsync(input);
+        isValidInput = await schemaParams.validateAsync(params); 
     } catch (error) {
         isValidInput = false;
         response.message = error.details[0]['message'];
@@ -23,7 +27,8 @@ module.exports = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-    let { departmentId, semester, lectures } = input;
+    let { lectures } = input;
+    let { departmentId, semester } = params;
     let IDs = [];
     let tempIDs;
 

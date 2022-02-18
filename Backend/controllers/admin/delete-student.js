@@ -4,8 +4,10 @@ const fs = require('fs');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.params;
     let response = {};
+
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required()
@@ -31,10 +33,8 @@ module.exports = (async (req, res) => {
             response.message = 'Student deleted successfully';
             responses.successResponseWithoutData(res, response.message, 1);
             try {
-                fs.unlinkSync(`public/profile-images/students/${student.rollNo}.jpg`);
-            } catch (error) {
-                console.log(error);
-            }
+                fs.unlinkSync(`public/profile-images/students/${student.profileImagePath}`);
+            } catch (error) {}
         }
         else {
             response.message = `${input.rollNo}: Student does not exist.`;

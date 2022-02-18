@@ -5,10 +5,13 @@ const responses = require('../responses');
 
 module.exports = (async (req, res) => {
     let input = req.body;
-    let response = {};
-    
+    let params = req.params;
+    let response = {};    
+
+    const schemaParams = Joi.object({
+        id: Joi.number().integer().required()
+    });
     const schema = Joi.object({
-        id: Joi.number().integer().required(),
         name: Joi.string().required(),
         semester: Joi.number().integer().min(1).max(8).required(),
         departmentId: Joi.number().integer().required(),
@@ -17,6 +20,7 @@ module.exports = (async (req, res) => {
     let isValidInput = true;
     try {
         isValidInput = await schema.validateAsync(input);
+        isValidInput = await schemaParams.validateAsync(params);
     }
     catch(error) {
         isValidInput = false;
@@ -30,8 +34,7 @@ module.exports = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-
-    let obj = (await db.sequelize.query(`select * from assignments where id = ${input.id};`))[0];
+    let obj = (await db.sequelize.query(`select * from assignments where id = ${params.id};`))[0];
     if(!obj.length) {
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
@@ -41,10 +44,10 @@ module.exports = (async (req, res) => {
         return responses.errorResponseWithoutData(res, 'Invalid assignment id', 0, 200);
     }
 
-    let { id, name, semester, departmentId, deadline } = input;
+    let { name, semester, departmentId, deadline } = input;
     let query = ``;
-    if(req.file) query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}", filePath = "${req.file.filename}" WHERE id = ${id};`;
-    else query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}" WHERE id = ${id};`;
+    if(req.file) query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}", filePath = "${req.file.filename}" WHERE id = ${params.id};`;
+    else query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}" WHERE id = ${params.id};`;
 
     try {
         await db.sequelize.query(query);

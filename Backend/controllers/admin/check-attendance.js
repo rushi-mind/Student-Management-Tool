@@ -3,20 +3,22 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.query;
+    let params = req.params;
     let response = {};
 
-    const schema = Joi.object({
-        semester: Joi.number().integer().min(1).max(8).required(),
+    const schemaParams = Joi.object({
         departmentId: Joi.number().integer().min(1).required(),
-        dateRange: Joi.object({
-            from: Joi.date().required(),
-            to: Joi.date().greater(Joi.ref('from')).required()
-        }).required()
+        semester: Joi.number().integer().min(1).max(8).required()
+    });
+    const schema = Joi.object({
+        dateFrom: Joi.date().required(),
+        dateTo: Joi.date().greater(Joi.ref('dateFrom')).required()
     });
     let isValidInput = true;
     try {
         isValidInput = schema.validateAsync(input);
+        isValidInput = schemaParams.validateAsync(params);
     } catch (error) {
         isValidInput = false;
         response.code = 400;
@@ -24,15 +26,15 @@ module.exports = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
 
-
     
-    let { semester, departmentId, dateRange } = input;
+    let { semester, departmentId } = params;
+    let { dateFrom, dateTo } = input;
 
     let query = `
         SELECT students.rollNo, CONCAT(students.firstName, ' ', students.lastName) AS name, attendance.date, attendance.status 
         FROM attendance
         INNER JOIN students ON students.id = attendance.studentId
-        WHERE students.semester = ${semester} AND students.departmentId = ${departmentId} AND attendance.date BETWEEN "${dateRange.from}" AND "${dateRange.to}";
+        WHERE students.semester = ${semester} AND students.departmentId = ${departmentId} AND attendance.date BETWEEN "${dateFrom}" AND "${dateTo}";
     `;
     try {
         let result = (await db.sequelize.query(query))[0];
