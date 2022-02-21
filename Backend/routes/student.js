@@ -1,9 +1,12 @@
 // Importing required dependencies and files
 const router = require('express').Router();
 const auth = require('../middlewares/auth-student');
-const express = require('express');
 var path = require('path');
 const multer = require('multer');
+const bodyParser = require('body-parser');
+
+let jsonParser = bodyParser.json();
+let urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 // Importing route controllers
 const changePassword = require('../controllers/student/change-password');
@@ -24,25 +27,25 @@ let storage = multer.diskStorage({
         cb(null, (req.student.rollNo).toString() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage });
+const uploadImage = multer({ storage });
 
 
 // -------------------------------------------------------------------------------------------------------------
 router.get('/get-profile/:rollNo', auth, getProfile);
-router.put('/edit-profile-image/:rollNo', [auth, upload.single('image')], editProfileImage);
-router.put('/change-password/:rollNo', auth, changePassword);
+router.put('/edit-profile-image/:rollNo', [ auth, uploadImage.single('image') ], editProfileImage);
+router.put('/change-password/:rollNo', [ auth, jsonParser ], changePassword);
 router.delete('/delete-profile-image/:rollNo', auth, deleteProfileImage);
 
 // -------------------------------------------------------------------------------------------------------------
 router.get('/get-assignments/:rollNo', auth, getAssignments);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/leave-application', auth, leaveApplication);
+router.post('/leave-application', [ auth, jsonParser ], leaveApplication);
 
 // -------------------------------------------------------------------------------------------------------------
 router.get('/get-attendance', auth, getAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/login', login);
+router.post('/login', [ urlencodedParser ], login);
 
 module.exports = router;

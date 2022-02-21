@@ -7,8 +7,6 @@ const responses = require('../responses');
 module.exports = (async (req, res) => {
     let input = req.body;
     let response = {};
-    console.log(input);
-    return res.send('done');
     
     const schema = Joi.object({
         rollNo: Joi.number().integer().required(),

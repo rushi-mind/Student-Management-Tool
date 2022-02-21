@@ -11,22 +11,21 @@ module.exports = (async (req, res) => {
     const schema = Joi.object({
         id: Joi.number().integer().required()
     });
-    let isValidInput = true;
+    let isValidParams = true;
     try {
-        isValidInput = await schema.validateAsync(params);
+        isValidParams = await schema.validateAsync(params);
     } catch (error) {
-        isValidInput = false;
-        response.code = 400;
+        isValidParams = false;
         response.message = error.details[0]['message'];
     }
-    if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
+    if(!isValidParams) return responses.validationErrorResponseData(res, response.message, response.code);
 
     let isValidId = true;
     try {
-        let admin = (await db.sequelize.query(`select * from events where id = ${params.id};`))[0][0];
-        if(!admin) {
+        let department = (await db.sequelize.query(`select * from departments where id = ${params.id};`))[0][0];
+        if(!department) {
             isValidId = false;
-            response.message = 'Invalid event id';
+            response.message = 'Invalid department id';
         }
     } catch (error) {
         isValidId = false;
@@ -35,9 +34,9 @@ module.exports = (async (req, res) => {
     if(!isValidId) return responses.errorResponseWithoutData(res, response.message, 0, 200);
 
     try {
-        await db.sequelize.query(`delete from events where id = ${params.id};`);
-        responses.successResponseWithoutData(res, 'Event deleted successfully', 1);
+        await db.sequelize.query(`delete from departments where id = ${params.id};`);
+        responses.successResponseWithoutData(res, 'Department deleted successfully', 1);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
-});
+})

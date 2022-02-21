@@ -4,7 +4,12 @@ const auth = require('../middlewares/auth-admin');
 const multer = require('multer');
 const path = require('path');
 const db = require('../models');
-const express = require('express');
+const bodyParser = require('body-parser');
+
+let upload = multer();
+let jsonParser = bodyParser.json();
+let urlencodedParser = bodyParser.urlencoded({ extended: false });
+
 
 // Importing route controllers
 const addStudent = require('../controllers/admin/add-student');
@@ -22,9 +27,11 @@ const addEvent = require('../controllers/admin/add-event');
 const deleteEvent = require('../controllers/admin/delete-event');
 const deleteAssignment = require('../controllers/admin/delete-assignment');
 const addTeacher = require('../controllers/admin/add-teacher');
-const getTeachers = require('../controllers/admin/get-teachers');
 const editTeacher = require('../controllers/admin/edit-teacher');
 const deleteTeacher = require('../controllers/admin/delete-teacher');
+const addDepartment = require('../controllers/admin/add-department');
+const getDepartments = require('../controllers/admin/get-departments');
+const deleteDepartment = require('../controllers/admin/delete-department');
 const login = require('../controllers/admin/login');
 
 
@@ -67,17 +74,21 @@ const uploadEventImage = multer({ storage: eventImageStorage });
 
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/add-student', auth, addStudent);
-router.put('/edit-student/:rollNo', auth, editStudent);
+router.post('/add-student', [ auth, jsonParser ], addStudent);
+router.put('/edit-student/:rollNo', [ auth, jsonParser ], editStudent);
 router.get('/get-students/:departmentId/:semester', auth, getStudents);
 router.get('/get-student/:rollNo', auth, getStudent);
 router.delete('/delete-student/:rollNo', auth, deleteStudent);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/add-teacher', auth, addTeacher);
-router.get('/get-teachers', auth, getTeachers);
-router.put('/edit-teacher/:id', auth, editTeacher);
+router.post('/add-teacher', [ auth, jsonParser ], addTeacher);
+router.put('/edit-teacher/:id', [ auth, jsonParser ], editTeacher);
 router.delete('/delete-teacher/:id', auth, deleteTeacher);
+
+// -------------------------------------------------------------------------------------------------------------
+router.post('/add-department', [ auth, upload.array() ], addDepartment);
+router.get('/get-departments', auth, getDepartments);
+router.delete('/delete-department/:id', auth, deleteDepartment);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-assignment', [ auth, uploadAssignmentFile.single('file') ], addAssignment);
@@ -85,11 +96,11 @@ router.put('/edit-assignment/:id', [ auth, uploadAssignmentFile.single('file') ]
 router.delete('/delete-assignment/:id', auth, deleteAssignment);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/attendance', auth, attendance);
+router.post('/attendance', [ auth, jsonParser ], attendance);
 router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/add-timetable', auth, addTimetable);
+router.post('/add-timetable', [ auth, jsonParser ], addTimetable);
 router.put('/edit-timetable/:departmentId/:semester', auth, editTimetable);
 
 // -------------------------------------------------------------------------------------------------------------
@@ -97,6 +108,6 @@ router.post('/add-event', [ auth, uploadEventImage.single('image') ], addEvent);
 router.delete('/delete-event/:id', auth, deleteEvent);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/login', login);
+router.post('/login', [ urlencodedParser ], login);
 
 module.exports = router;
