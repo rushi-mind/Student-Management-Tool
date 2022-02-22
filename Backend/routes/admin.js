@@ -32,6 +32,8 @@ const deleteTeacher = require('../controllers/admin/delete-teacher');
 const addDepartment = require('../controllers/admin/add-department');
 const getDepartments = require('../controllers/admin/get-departments');
 const deleteDepartment = require('../controllers/admin/delete-department');
+const getTeachers = require('../controllers/admin/get-teachers');
+const getTeacher = require('../controllers/admin/get-teacher');
 const login = require('../controllers/admin/login');
 
 
@@ -82,8 +84,10 @@ router.delete('/delete-student/:rollNo', auth, deleteStudent);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-teacher', [ auth, jsonParser ], addTeacher);
-router.put('/edit-teacher/:id', [ auth, jsonParser ], editTeacher);
+router.put('/edit-teacher/:adminId', [ auth, jsonParser ], editTeacher);
 router.delete('/delete-teacher/:id', auth, deleteTeacher);
+router.get('/get-teachers/:departmentId', auth, getTeachers);
+router.get('/get-teacher/:adminId', auth, getTeacher);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-department', [ auth, upload.array() ], addDepartment);

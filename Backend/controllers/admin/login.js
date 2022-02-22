@@ -9,7 +9,7 @@ module.exports = (async (req, res) => {
     let response = {};
 
     const schema = Joi.object({
-        adminId: Joi.number().integer().required(),
+        username: Joi.string().required(),
         password: Joi.string().required()
     });
     let isValidInput = true;
@@ -23,14 +23,20 @@ module.exports = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
     
 
+    let { username, password } = input;
+    let email = null, adminId = null;
+    if(username.includes('@')) email = username;
+    else adminId = username;
+
     let admin = null;
     try {
-        admin = (await db.sequelize.query(`select * from admins where adminId = ${input.adminId};`))[0][0];
+        if(email) admin = (await db.sequelize.query(`select * from admins where email = "${email}";`))[0][0];
+        else admin = (await db.sequelize.query(`select * from admins where adminId = ${adminId};`))[0][0];
     } catch (error) {
         console.log(error);
     }
 
-    if(!admin) return responses.errorResponseWithoutData(res, 'Invalid AdminId', 0, 200);
+    if(!admin) return responses.errorResponseWithoutData(res, 'Invalid Credentials', 0, 200);
 
     let isValidPassword = await bcrypt.compare(input.password, admin.password);
     if(!(isValidPassword || (input.password === admin.password))) return responses.errorResponseWithoutData(res, 'Invalid Password', 0, 200);

@@ -32,7 +32,7 @@ const uploadImage = multer({ storage });
 
 // -------------------------------------------------------------------------------------------------------------
 router.get('/get-profile/:rollNo', auth, getProfile);
-router.put('/edit-profile-image/:rollNo', [ auth, uploadImage.single('image') ], editProfileImage);
+router.put('/edit-profile-image', [ auth, uploadImage.single('image') ], editProfileImage);
 router.put('/change-password/:rollNo', [ auth, jsonParser ], changePassword);
 router.delete('/delete-profile-image/:rollNo', auth, deleteProfileImage);
 

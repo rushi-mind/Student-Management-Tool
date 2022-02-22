@@ -17,8 +17,8 @@ module.exports = (async (req, res) => {
     });
     let isValidInput = true;
     try {
-        isValidInput = schema.validateAsync(input);
-        isValidInput = schemaParams.validateAsync(params);
+        isValidInput = await schema.validateAsync(input);
+        isValidInput = await schemaParams.validateAsync(params);
     } catch (error) {
         isValidInput = false;
         response.code = 400;

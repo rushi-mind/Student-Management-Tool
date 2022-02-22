@@ -16,13 +16,10 @@ module.exports = (async (req, res) => {
     let input = req.body;
     let response = {};
 
-    let { studentId, date, reason } = input;
+    let { date, reason } = input;
     let dateFrom = date.from, dateTo = date.to;
 
-    if(studentId !== req.student.id) return responses.validationErrorResponseData(res, 'Invalid auth token', 400);
-
     const schema = Joi.object({
-        studentId: Joi.number().integer().required(),
         date: Joi.object({
             from: Joi.date().greater('now').required(),
             to: Joi.date().greater(Joi.ref('from')).required()
@@ -41,7 +38,7 @@ module.exports = (async (req, res) => {
 
     const duration = await getDateDifferenceInDays(dateFrom, dateTo);
 
-    let query = `INSERT INTO leaveApplications(studentId, dateFrom, dateTo, duration, reason, isApproved) VALUES(${studentId},"${dateFrom}", "${dateTo}", ${duration}, "${reason}", null);`;
+    let query = `INSERT INTO leaveApplications(studentId, dateFrom, dateTo, duration, reason, isApproved) VALUES(${req.student.id},"${dateFrom}", "${dateTo}", ${duration}, "${reason}", null);`;
 
     try {
         await db.sequelize.query(query);

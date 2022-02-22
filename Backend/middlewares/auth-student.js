@@ -7,8 +7,13 @@ module.exports = (req, res, next) => {
     token = token.split(' ')[1];
     try {
         const decoded = jwt.verify(token, process.env.jwtPrivateKey);
-        req.student = decoded;
-        next();
+        if(decoded.rollNo && decoded.id) {
+            req.student = decoded;
+            next();
+        }
+        else {
+            responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
+        }
     } catch (error) {
         responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
     }

@@ -2,13 +2,8 @@
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Department extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+      
     }
   }
 
@@ -19,11 +14,29 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
+    departmentCod: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    departmentNameSlug: {
       type: DataTypes.STRING,
       allowNull: false
     }
   }, {
+    indexes: [
+      {
+        unique: true,
+        fields: ['departmentCode']
+      },
+      {
+        unique: true,
+        fields: ['departmentNameSlug']
+      }
+    ],
     sequelize,
     modelName: 'Department',
     tableName: 'departments',

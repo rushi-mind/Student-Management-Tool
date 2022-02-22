@@ -3,10 +3,10 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.params;
     let response = {};
 
-    if(req.student.rollNo !== input.rollNo) return responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
+    if(req.student.rollNo !== parseInt(input.rollNo)) return responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required()

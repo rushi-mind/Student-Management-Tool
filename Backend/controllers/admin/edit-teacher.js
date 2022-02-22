@@ -10,13 +10,10 @@ module.exports = (async (req, res) => {
     let response = {};
 
     const schemaParams = Joi.object({
-        id: Joi.number().integer().min(1).required()
+        adminId: Joi.number().integer().min(1).required()
     });
     const schema = Joi.object({
-        name: Joi.string().required(),
-        email: Joi.string().email().required(),
-        role: Joi.string().required(),
-        departmentId: Joi.number().integer().min(1).required(),
+        name: Joi.string().required()
     });
     let isValidInput = true;
     try {
@@ -30,10 +27,10 @@ module.exports = (async (req, res) => {
 
     let isValidAdminId = true;
     try {
-        let admin = (await db.sequelize.query(`select * from admins where _id = ${params.id};`))[0][0];
+        let admin = (await db.sequelize.query(`select * from admins where adminId = ${params.adminId};`))[0][0];
         if(!admin) {
             isValidAdminId = false;
-            response.message = 'Invalid admin id';
+            response.message = 'Invalid adminId';
         }
     } catch (error) {
         isValidAdminId = false;
@@ -41,17 +38,11 @@ module.exports = (async (req, res) => {
     }
     if(!isValidAdminId) return responses.errorResponseWithoutData(res, response.message, 0, 200);
 
-    let { name, email, role, departmentId } = input;
-    let { id }  = params;
+    let { name } = input;
+    let { adminId }  = params;
 
     try {
-        await db.Admin.update({
-            name, email, role, departmentId
-        }, {
-            where: {
-                _id: id
-            }
-        });
+        await db.sequelize.query(`update admins set name = "${name}" where adminId = ${adminId};`);
         response.message = 'Teacher edited successfully';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {

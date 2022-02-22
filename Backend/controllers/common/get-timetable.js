@@ -3,7 +3,7 @@ const Joi = require('joi');
 const responses = require('../responses');
 
 module.exports = (async (req, res) => {
-    let input = req.body;
+    let input = req.params;
     let response = {};
 
     const schema = Joi.object({
@@ -20,7 +20,7 @@ module.exports = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-    let { semester, departmentId } = input;
+    let { departmentId, semester } = input;
     
     let query = `SELECT lectureNo, Monday, Tuesday, Wednesday, Thursday, Friday FROM timetable WHERE semester = ${semester} AND departmentId = ${departmentId};`;
 
