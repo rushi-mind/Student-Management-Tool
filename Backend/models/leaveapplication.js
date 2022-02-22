@@ -3,7 +3,9 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class LeaveApplication extends Model {
     static associate(models) {
-
+      this.belongsTo(models.Student, {
+        foreignKey: 'studentId'
+      });
     }
   }
   LeaveApplication.init({

@@ -3,7 +3,10 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Department extends Model {
     static associate(models) {
-      
+      this.hasMany(models.Assignment);
+      this.hasMany(models.Student);
+      this.hasMany(models.Admin);
+      this.hasMany(models.Timetable);
     }
   }
 
@@ -14,9 +17,10 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    departmentCod: {
+    departmentCode: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      unique: true
     },
     name: {
       type: DataTypes.STRING,
@@ -24,19 +28,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     departmentNameSlug: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      unique: true
     }
   }, {
-    indexes: [
-      {
-        unique: true,
-        fields: ['departmentCode']
-      },
-      {
-        unique: true,
-        fields: ['departmentNameSlug']
-      }
-    ],
     sequelize,
     modelName: 'Department',
     tableName: 'departments',

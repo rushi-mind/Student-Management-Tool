@@ -3,7 +3,9 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Timetable extends Model {
     static associate(models) {
-      // define association here
+      this.belongsTo(models.Department, {
+        foreignKey: 'departmentId'
+      });
     }
   }
   Timetable.init({

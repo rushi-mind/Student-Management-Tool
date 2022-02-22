@@ -4,7 +4,11 @@ module.exports = (sequelize, DataTypes) => {
   class Student extends Model {
     
     static associate(models) {
-      
+      this.belongsTo(models.Department, {
+        foreignKey: 'departmentId'
+      });
+      this.hasMany(models.LeaveApplication);
+      this.hasMany(models.Attendance);
     }
   }
   Student.init({

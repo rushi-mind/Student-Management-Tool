@@ -43,16 +43,24 @@ let assignmetnFileSotrage = multer.diskStorage({
         cb(null, 'public/assignments/');
     },
     filename: async (req, file, cb) => {
-        if(!req.params) {
-            let id = 0;
+        if((req.url).includes('/add-assignment')) {
+            let fileName = ``;
             try{ 
-                id = (await db.sequelize.query(`select id from assignments order by id desc limit 1`))[0][0];
-            } catch {}
-            if(id) id = id.id;
-            cb(null, `${parseInt(id) + 1}${path.extname(file.originalname)}`);
+                let total = (await db.sequelize.query(`select count(id) as total from assignments where semester = ${req.params.semester} and departmentId = ${req.params.departmentId};`))[0][0]['total'];
+                fileName = `${req.params.departmentId}-${req.params.semester}-${total+1}`;
+            } catch {
+                fileName = `temp`;
+            }
+            cb(null, `${fileName}${path.extname(file.originalname)}`);
         }
-        else if(req.params) {
-            cb(null, `${req.params.id}${path.extname(file.originalname)}`);
+        else {
+            let fileName = null;
+            try {
+                fileName = (await db.sequelize.query(`select filePath from assignments where id = ${req.params.id};`))[0][0]['filePath'];
+            } catch (error) {
+                fileName = `${req.params.id}-temp.pdf`;
+            }
+            cb(null, `${fileName}`);
         }
     }
 });
@@ -95,7 +103,7 @@ router.get('/get-departments', auth, getDepartments);
 router.delete('/delete-department/:id', auth, deleteDepartment);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/add-assignment', [ auth, uploadAssignmentFile.single('file') ], addAssignment);
+router.post('/add-assignment/:departmentId/:semester', [ auth, uploadAssignmentFile.single('file') ], addAssignment);
 router.put('/edit-assignment/:id', [ auth, uploadAssignmentFile.single('file') ], editAssignment);
 router.delete('/delete-assignment/:id', auth, deleteAssignment);
 
