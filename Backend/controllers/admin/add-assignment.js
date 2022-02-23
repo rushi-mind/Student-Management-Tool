@@ -34,15 +34,21 @@ module.exports = async (req, res) => {
 
     let { name, deadline } = input;
     let { semester, departmentId } = params;
-    let query = ``;
-    if(req.file) query = `INSERT INTO assignments(name, semester, departmentId, deadline, filePath) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}", "${req.file.filename}");`;
-    else query = `INSERT INTO assignments(name, semester, departmentId, deadline) VALUES("${name}", ${semester}, ${departmentId}, "${deadline}");`;
+    let filePath = null;
+    if(req.file) filePath = `http://192.168.1.169:5000/assignments/${req.file.filename}`;
     
     try {
-        await db.sequelize.query(query);
+        let assignment = await db.Assignment.create({
+            name,
+            semester,
+            departmentId,
+            deadline,
+            filePath
+        }, {
+            fields: ['name', 'semester', 'departmentId', 'deadline', 'filePath']
+        });
         response.message = 'Assignment inserted successfully';
-        response.code = 1;
-        responses.successResponseWithoutData(res, response.message, response.code);
+        responses.successResponseData(res, assignment, 1, response.message);
     } catch(error) {
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);

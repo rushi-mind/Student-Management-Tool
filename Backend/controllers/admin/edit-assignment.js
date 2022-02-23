@@ -13,8 +13,6 @@ module.exports = (async (req, res) => {
     });
     const schema = Joi.object({
         name: Joi.string().required(),
-        semester: Joi.number().integer().min(1).max(8).required(),
-        departmentId: Joi.number().integer().required(),
         deadline: Joi.date().greater('now').required()
     });
     let isValidInput = true;
@@ -27,9 +25,7 @@ module.exports = (async (req, res) => {
         response.message = error.details[0]['message'];
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
-        } catch(error) {
-            console.log(error);
-        }
+        } catch(error) {}
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
@@ -38,20 +34,25 @@ module.exports = (async (req, res) => {
     if(!obj.length) {
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
-        } catch(error) {
-            console.log(error);
-        }
+        } catch(error) {}
         return responses.errorResponseWithoutData(res, 'Invalid assignment id', 0, 200);
     }
 
-    let { name, semester, departmentId, deadline } = input;
-    let query = ``;
-    if(req.file) query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}", filePath = "${req.file.filename}" WHERE id = ${params.id};`;
-    else query = `UPDATE assignments SET name = "${name}", semester = ${semester}, departmentId = ${departmentId}, deadline = "${deadline}" WHERE id = ${params.id};`;
+    let { name, deadline } = input;
+    let filePath = null;
+    if(req.file) filePath = `http://192.168.1.169:5000/assignments/${req.file.filename}`;
 
     try {
-        await db.sequelize.query(query);
-        response.message = 'Assignment updated successfully.';
+        await db.Assignment.update({
+            name,
+            deadline,
+            filePath
+        }, {
+            where: {
+                id: params.id
+            }
+        });
+        response.message = 'Assignment updated successfully';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
         response.message = error.parent.sqlMessage;

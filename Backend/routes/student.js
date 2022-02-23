@@ -10,7 +10,6 @@ let urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 // Importing route controllers
 const changePassword = require('../controllers/student/change-password');
-const getAssignments = require('../controllers/student/get-assignments');
 const getAttendance = require('../controllers/student/get-attendance');
 const getProfile = require('../controllers/student/get-profile');
 const leaveApplication = require('../controllers/student/leave-application');
@@ -35,9 +34,6 @@ router.get('/get-profile/:rollNo', auth, getProfile);
 router.put('/edit-profile-image', [ auth, uploadImage.single('image') ], editProfileImage);
 router.put('/change-password/:rollNo', [ auth, jsonParser ], changePassword);
 router.delete('/delete-profile-image/:rollNo', auth, deleteProfileImage);
-
-// -------------------------------------------------------------------------------------------------------------
-router.get('/get-assignments/:rollNo', auth, getAssignments);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/leave-application', [ auth, jsonParser ], leaveApplication);

@@ -57,7 +57,14 @@ let assignmetnFileSotrage = multer.diskStorage({
             let fileName = null;
             try {
                 fileName = (await db.sequelize.query(`select filePath from assignments where id = ${req.params.id};`))[0][0]['filePath'];
+                if(fileName) fileName = fileName.split('/')[fileName.split('/').length  - 1];
+                else {
+                    let temp = (await db.sequelize.query(`select semester, departmentId from assignments where id = ${req.params.id};`))[0][0];
+                    let total = (await db.sequelize.query(`select count(id) as total from assignments where semester = ${temp.semester} and departmentId = ${temp.departmentId};`))[0][0]['total'];
+                    fileName = `${temp.departmentId}-${temp.semester}-${total+1}${path.extname(file.originalname)}`;
+                }
             } catch (error) {
+                console.log(error);
                 fileName = `${req.params.id}-temp.pdf`;
             }
             cb(null, `${fileName}`);

@@ -5,9 +5,11 @@ const auth = require('../middlewares/auth');
 // Importing route controllers
 const getEvents = require('../controllers/common/get-events');
 const getTimetable = require('../controllers/common/get-timetable');
+const getAssignments = require('../controllers/common/get-assignments');
 
 // -------------------------------------------------------------------------------------------------------------
 router.get('/get-events', auth, getEvents);
 router.get('/get-timetable/:departmentId/:semester', auth, getTimetable);
+router.get('/get-assignments/:departmentId/:semester', auth, getAssignments);
 
 module.exports = router;

@@ -46,4 +46,4 @@ module.exports = (async (req, res) => {
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
-})
+});

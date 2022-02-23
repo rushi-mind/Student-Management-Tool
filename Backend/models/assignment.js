@@ -36,6 +36,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     deadline: {
       type: DataTypes.DATEONLY
+    },
+    filePath: {
+      type: DataTypes.STRING
     }
   }, {
     sequelize,
