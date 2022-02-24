@@ -7,6 +7,7 @@ module.exports = (req, res, next) => {
     token = token.split(' ')[1];
     try {
         const decoded = jwt.verify(token, process.env.jwtPrivateKey);
+        if(!decoded.adminId) throw 'error';
         req.admin = decoded;
         next();
     } catch (error) {

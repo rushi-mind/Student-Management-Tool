@@ -1,8 +1,12 @@
 const db = require('../../models');
+const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const responses = require('../responses');
 
-module.exports = (async (req, res) => {
+/**************************** GET PROFILE ****************************/
+
+// get-profile handler
+const getProfile = (async (req, res) => {
     let input = req.params;
     let response = {};
 
@@ -40,3 +44,38 @@ module.exports = (async (req, res) => {
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
+
+
+/**************************** EDIT PROFILE IMAGE ****************************/
+
+// edit-profile-image handler
+const editProfileImage = (async (req, res) => {
+    try {
+        db.sequelize.query(`update students set profileImagepath = "${req.file.filename}" where rollNo = ${req.student.rollNo};`);
+        responses.successResponseWithoutData(res, 'Profile picture updated successfully', 1);
+    } catch (error) {
+        console.log(error);
+        responses.errorResponseWithoutData(res, 'Something went wrong. Please try again', 0, 200);
+    }
+});
+
+
+/**************************** DELETE PROFILE IMAGE ****************************/
+
+// delete-profile-image handler
+const deleteProfileImage = (async (req, res) => {
+    try {
+        db.sequelize.query(`update students set profileImagepath = null where rollNo = ${req.student.rollNo};`);
+        responses.successResponseWithoutData(res, 'Profile picture deleted successfully', 1);
+    } catch (error) {
+        console.log(error);
+        responses.errorResponseWithoutData(res, 'Something went wrong. Please try again', 0, 200);
+    }
+});
+
+/*******************************************************************************/
+module.exports = {
+    getProfile,
+    editProfileImage,
+    deleteProfileImage
+};

@@ -9,13 +9,10 @@ let jsonParser = bodyParser.json();
 let urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 // Importing route controllers
-const changePassword = require('../controllers/student/change-password');
-const getAttendance = require('../controllers/student/get-attendance');
-const getProfile = require('../controllers/student/get-profile');
-const leaveApplication = require('../controllers/student/leave-application');
-const editProfileImage = require('../controllers/student/edit-profile-image');
-const deleteProfileImage = require('../controllers/student/delete-profile-image');
-const login = require('../controllers/student/login');
+const { getProfile, editProfileImage, deleteProfileImage } = require('../controllers/student/profileController');
+const getAttendance = require('../controllers/student/attendanceController');
+const leaveApplication = require('../controllers/student/leaveApplicationController');
+const { login, changePassword } = require('../controllers/student/auth');
 
 // -------------------------------------------------------------------------------------------------------------
 let storage = multer.diskStorage({

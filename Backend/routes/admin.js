@@ -12,30 +12,14 @@ let urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 
 // Importing route controllers
-const addStudent = require('../controllers/admin/add-student');
-const editStudent = require('../controllers/admin/edit-student');
-const addAssignment = require('../controllers/admin/add-assignment');
-const editAssignment = require('../controllers/admin/edit-assignment');
-const deleteStudent = require('../controllers/admin/delete-student');
-const checkAttendance = require('../controllers/admin/check-attendance');
-const addTimetable = require('../controllers/admin/add-timetable');
-const editTimetable = require('../controllers/admin/edit-timetable');
-const getStudents = require('../controllers/admin/get-students');
-const attendance = require('../controllers/admin/attendance');
-const getStudent = require('../controllers/admin/get-student');
-const addEvent = require('../controllers/admin/add-event');
-const deleteEvent = require('../controllers/admin/delete-event');
-const deleteAssignment = require('../controllers/admin/delete-assignment');
-const addTeacher = require('../controllers/admin/add-teacher');
-const editTeacher = require('../controllers/admin/edit-teacher');
-const deleteTeacher = require('../controllers/admin/delete-teacher');
-const addDepartment = require('../controllers/admin/add-department');
-const getDepartments = require('../controllers/admin/get-departments');
-const deleteDepartment = require('../controllers/admin/delete-department');
-const getTeachers = require('../controllers/admin/get-teachers');
-const getTeacher = require('../controllers/admin/get-teacher');
-const login = require('../controllers/admin/login');
-
+const { addStudent, editStudent, getStudents, getStudent, deleteStudent } = require('../controllers/admin/studentsController');
+const { addTeacher, editTeacher, getTeacher, getTeachers, deleteTeacher } = require('../controllers/admin/teachersController');
+const { fillAttendance, checkAttendance } = require('../controllers/admin/attendanceController');
+const { addDepartment, getDepartments, deleteDepartment } = require('../controllers/admin/departmentsController');
+const { addAssignment, editAssignment, getAssignment, deleteAssignment } = require('../controllers/admin/assignmentsController');
+const { addTimetable, editTimetable } = require('../controllers/admin/timetablesController');
+const { addEvent, deleteEvent } = require('../controllers/admin/eventsController');
+const login = require('../controllers/admin/auth');
 
 // -------------------------------------------------------------------------------------------------------------
 let assignmetnFileSotrage = multer.diskStorage({
@@ -112,10 +96,11 @@ router.delete('/delete-department/:id', auth, deleteDepartment);
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-assignment/:departmentId/:semester', [ auth, uploadAssignmentFile.single('file') ], addAssignment);
 router.put('/edit-assignment/:id', [ auth, uploadAssignmentFile.single('file') ], editAssignment);
+router.get('/get-assignment/:id', auth, getAssignment);
 router.delete('/delete-assignment/:id', auth, deleteAssignment);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/attendance', [ auth, jsonParser ], attendance);
+router.post('/attendance', [ auth, jsonParser ], fillAttendance);
 router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
