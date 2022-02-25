@@ -19,14 +19,17 @@ module.exports = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
     
-
-    let query = `SELECT date, status FROM attendance WHERE studentId = ${req.student.id} AND date BETWEEN "${input.from}" AND "${input.to}";`;
-
     try {
-        let result = (await db.sequelize.query(query))[0];
-        response.totalRecords = result.length;
+        let result = await db.Attendance.findAll({
+            attributes: ['date', 'status'],
+            where: {
+                studentId: req.student.id,
+                date: { [db.Sequelize.Op.between]: [input.from, input.to] }
+            }
+        });
+        let totalRecords = result.length;
         response.data = result;
-        responses.successResponseData(res, result, 1, 'Attendance fetched successfully', { totalRecords: response.totalRecords });
+        responses.successResponseData(res, result, 1, 'Attendance fetched successfully', { totalRecords });
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);

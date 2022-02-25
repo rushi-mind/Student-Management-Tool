@@ -19,15 +19,14 @@ module.exports = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let { departmentId, semester } = input;
-    
-    let query = `SELECT lectureNo, Monday, Tuesday, Wednesday, Thursday, Friday FROM timetable WHERE semester = ${semester} AND departmentId = ${departmentId};`;
-
     try {
-        let result = (await db.sequelize.query(query))[0];
-        if(!result.length) responses.successResponseData(res, result, 1, 'No Timetable found', null);
-        else responses.successResponseData(res, result, 1, 'Timetable fetched successfully', null);
+        let result = await db.Timetable.findAll({
+            attributes: ['lectureNo', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            where: { departmentId, semester }
+        });
+        if(!result.length) responses.successResponseData(res, result, 1, 'No Data Found.', null);
+        else responses.successResponseData(res, result, 1, 'Timetable fetched successfully.', null);
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);

@@ -22,11 +22,6 @@ const getDepartmentCode = async (id) => {
 const getSrNo = async (departmentId) => {
     let srNo = null;
     try {
-        let temp = await db.Admin.findOne({
-            attributes: [
-                [db.Sequelize.fn('COUNT', db.Sequelize.col('_id')), 'total']
-            ]
-        });
         srNo = (await db.sequelize.query(`select count(_id) as total from admins where departmentId = ${departmentId};`))[0][0]['total'];
     } catch (error) {}
     return srNo+1;
@@ -44,7 +39,7 @@ const generateTeacherID = (departmentCode, srNo) => {
 // add-teacher route handler
 const addTeacher = (async (req, res) => {
 
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Admin only can add/edit teachers', 0, 200);
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
 
     let input = req.body;
     let response = {};
@@ -66,7 +61,7 @@ const addTeacher = (async (req, res) => {
     let { name, role, departmentId } = input;
 
     let departmentCode = await getDepartmentCode(departmentId);
-    if(!departmentCode) return responses.errorResponseWithoutData(res, 'Invalid Department ID entered', 0, 200);
+    if(!departmentCode) return responses.errorResponseWithoutData(res, 'Invalid Department-ID.', 0, 200);
 
     let srNo = await getSrNo(departmentId);
 
@@ -90,7 +85,7 @@ const addTeacher = (async (req, res) => {
         });
 
         teacher.dataValues.departmentCode = departmentCode;
-        responses.successResponseData(res, { teacher }, 1, 'Teacher added successfully');
+        responses.successResponseData(res, { teacher }, 1, 'Teacher added successfully.');
     } catch (error) {
         console.log(error);
         response.message = error.parent.sqlMessage;
@@ -98,13 +93,11 @@ const addTeacher = (async (req, res) => {
     }
 });
 
-
-
 /**************************** EDIT TEACHER ****************************/
 
 // edit-teacher route handler
 const editTeacher = (async (req, res) => {
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Admin only can add/edit teachers', 0, 200);
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
 
     let input = req.body;
     let params = req.params;
@@ -128,10 +121,10 @@ const editTeacher = (async (req, res) => {
 
     let isValidAdminId = true;
     try {
-        let admin = (await db.sequelize.query(`select * from admins where adminId = ${params.adminId};`))[0][0];
+        let admin = await db.Admin.findOne({ where: {adminId: params.adminId } });
         if(!admin) {
             isValidAdminId = false;
-            response.message = 'Invalid adminId';
+            response.message = 'Invalid Admin-ID.';
         }
     } catch (error) {
         isValidAdminId = false;
@@ -143,24 +136,19 @@ const editTeacher = (async (req, res) => {
     let { adminId }  = params;
 
     try {
-        await db.sequelize.query(`update admins set name = "${name}" where adminId = ${adminId};`);
-        response.message = 'Teacher edited successfully';
+        await db.Admin.update({ name }, { where: { adminId } });
+        response.message = 'Details update successfully.';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
 
-
-
 /**************************** GET TEACHER ****************************/
 
 // get-teacher route handler
 const getTeacher = (async (req, res) => {
-
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Admin only can add/edit/get teachers', 0, 200);
-
-
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
     let params = req.params;
     let response = {};
 
@@ -176,13 +164,12 @@ const getTeacher = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let { adminId } = params;
-
-    let query = `SELECT adminId, name, email, role, departmentId FROM admins WHERE adminId = ${adminId};`;
-
     try {
-        const teacher = (await db.sequelize.query(query))[0][0];
+        const teacher = await db.Admin.findOne({
+            attributes: ['adminId', 'name', 'email', 'role', 'departmentId'],
+            where: { adminId }
+        });
         if(!teacher) throw "invalid";
         let responseData = {
             adminId: teacher.adminId,
@@ -190,26 +177,24 @@ const getTeacher = (async (req, res) => {
             email: teacher.email,
             role: teacher.role
         };
-        let departmentName = (await db.sequelize.query(`select name from departments where id = ${teacher.departmentId};`))[0][0]['name'];
-        responseData.department = departmentName;
-        responses.successResponseData(res, responseData, 1, 'Students fetched successfully', null);
+        let temp = await db.Department.findOne({
+            attributes: ['name'],
+            where: { id: teacher.departmentId }
+        });
+        responseData.department = temp.name;
+        responses.successResponseData(res, responseData, 1, 'Teacher fetched successfully.', null);
     } catch (error) {
-        if(error === 'invalid') response.message = `Invalid teacher id entered`;
+        if(error === 'invalid') response.message = `Invalid Teacher-ID.`;
         else response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
 
-
-
 /**************************** GET TEACHERS ****************************/
 
 // get-teachers route handler
 const getTeachers = (async (req, res) => {
-
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Admin only can add/edit/get teachers', 0, 200);
-
-
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
     let params = req.params;
     let response = {};
 
@@ -225,21 +210,16 @@ const getTeachers = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let { departmentId } = params;
-
-    let query = `SELECT adminId, name, email, role FROM admins WHERE departmentId = ${departmentId};`;
-
     try {
-        const teachers = (await db.sequelize.query(query))[0];
-        const totalRecords = (await db.sequelize.query(`select count(adminId) as total from admins where departmentId = ${departmentId};`))[0][0]['total'];
-        responses.successResponseData(res, teachers, 1, 'Teachers fetched successfully', { totalRecords });
+        const teachers = await db.Admin.findAll({ where: { departmentId } });
+        const totalRecords = teachers.length;
+        responses.successResponseData(res, teachers, 1, 'Teachers fetched successfully.', { totalRecords });
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
-
 
 /**************************** DELETE TEACHER ****************************/
 
@@ -248,10 +228,10 @@ const deleteTeacher = (async (req, res) => {
     let params = req.params;
     let response = {};
 
-    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Access Denied.' });
 
     const schema = Joi.object({
-        id: Joi.number().integer().required()
+        adminId: Joi.number().integer().required()
     });
     let isValidParams = true;
     try {
@@ -262,27 +242,19 @@ const deleteTeacher = (async (req, res) => {
     }
     if(!isValidParams) return responses.validationErrorResponseData(res, response.message, 400);
 
-
-    let isvalidId = true;
+    let { adminId } = params;
     try {
-        let result = (await db.sequelize.query(`select * from admins where _id = ${params.id};`))[0][0];
-        if(!result) isvalidId = false;
-    } catch (error) {}
-
-    if(!isvalidId) return responses.errorResponseWithoutData(res, 'Invalid admin id', 0, 200);
-
-    try {
-        await db.sequelize.query(`delete from admins where _id = ${params.id};`);
-        responses.successResponseWithoutData(res, 'Teacher deleted successfully', 1);
+        let teacher = await db.Admin.findOne({ where: { adminId } });
+        if(!teacher) throw 'invalid';
+        await db.Admin.destroy({ where: { adminId } });
+        responses.successResponseWithoutData(res, 'Teacher deleted successfully.', 1);
     } catch (error) {
-        responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
+        if(error === 'invalid') responses.errorResponseWithoutData(res, 'Invalid Teacher-ID.', 0, 200);
+        else responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
 
-
-
 /************************************************************************/
-
 module.exports = {
     addTeacher,
     editTeacher,

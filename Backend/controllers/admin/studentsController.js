@@ -52,7 +52,7 @@ const addStudent = (async (req, res) => {
     let input = req.body;
     let response = {};
 
-    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Access Denied.' });
 
     const schema = Joi.object({
         firstName: Joi.string().required(),
@@ -77,7 +77,7 @@ const addStudent = (async (req, res) => {
     let { firstName, lastName, joiningYear, semester, departmentId, address, bloodGroup } = input;
 
     let departmentCode = await getDepartmentCode(departmentId);
-    if(!departmentCode) return responses.errorResponseWithoutData(res, 'Invalid Department ID entered', 0, 200);
+    if(!departmentCode) return responses.errorResponseWithoutData(res, 'Department-ID is invalid.', 0, 200);
     let srNo = await getSrNo(semester, departmentId);
 
     let rollNo = generateRollNo(joiningYear, departmentCode, srNo);
@@ -104,7 +104,7 @@ const addStudent = (async (req, res) => {
             ] 
         });
 
-        response.message = 'Student added successfully';
+        response.message = 'Student added successfully.';
         response.code = 1;
         student.departmentCode = departmentCode;
         responses.successResponseData(res, { student }, 1, response.message);
@@ -117,22 +117,17 @@ const addStudent = (async (req, res) => {
 });
 
 
-
-
 /**************************** EDIT STUDENT ****************************/
 
-// edit-student
+// edit-student route handler
 const editStudent = (async (req, res) => {
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Only admin has access to perform this operation', 0, 200);
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
 
     let input = req.body;
     let response = {};
     let rollNo = req.params.rollNo;
-    try {
-        rollNo = parseInt(rollNo);
-    } catch (error) {}
-    if(!rollNo) return responses.validationErrorResponseData(res, 'RollNo should be number only', 400);
-
+    rollNo = parseInt(rollNo);
+    if(!rollNo) return responses.validationErrorResponseData(res, 'Roll-No should be the number only.', 400);
 
     const schema = Joi.object({
         firstName: Joi.string().required(),
@@ -151,23 +146,20 @@ const editStudent = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
-
     let { firstName, lastName, semester, departmentId, address, bloodGroup } = input;
 
     let isValidRollNo = true;
     try{
-        let student = (await db.sequelize.query(`select * from students where rollNo = ${rollNo};`))[0][0];
+        let student = await db.Student.findOne({ where: { rollNo } });
         if(!student) {
             isValidRollNo = false;
-            response.message = 'Invalid RollNo';
+            response.message = 'Entered Roll-No is invalid.';
         }
     } catch(error) {
         isValidRollNo = false;
         console.log(error);
     }
     if(!isValidRollNo) return responses.errorResponseWithoutData(res, response.message, 0, 200);
-
 
     try {
         await db.Student.update({
@@ -177,21 +169,16 @@ const editStudent = (async (req, res) => {
             departmentId,
             address,
             bloodGroup
-        },
-        {
-            where: {
-                rollNo
-            }
+        }, {
+            where: { rollNo }
         });
-        response.message = 'Student updated successfully.';
+        response.message = 'Details have been updated successfully.';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch(error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
-
-
 
 
 /**************************** GET STUDENTS ****************************/
@@ -222,9 +209,7 @@ const getStudents = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let { pageNumber, pageSize, sortType, sortBy } = input;
-
     if(!pageNumber) pageNumber = 1;
     if(!pageSize) pageSize = 7;
     if(!sortType) sortType = 'ASC';
@@ -240,16 +225,14 @@ const getStudents = (async (req, res) => {
     try {
         const students = (await db.sequelize.query(query))[0];
         const totalRecords = (await db.sequelize.query(`select count(id) as total from students where semester = ${semester} and departmentId = ${departmentId};`))[0][0]['total'];
-        if(students.length) response.message = `Students fetched successfully`;
-        else response.message = `No students found on this page`;
+        if(students.length) response.message = `Students fetched successfully.`;
+        else response.message = `Data not found.`;
         responses.successResponseData(res, students, 1, response.message, { totalRecords, pageNumber, pageSize });
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
-
-
 
 
 /**************************** GET STUDENT ****************************/
@@ -271,10 +254,12 @@ const getStudent = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let student = null;
     try {
-        student = (await db.sequelize.query(`select id, rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup from students where rollNo = ${input.rollNo};`))[0][0];
+        student = await db.Student.findOne({
+            attributes: ['id', 'rollNo', 'firstName', 'lastName', 'email', 'semester', 'departmentId', 'address', 'bloodGroup'],
+            where: { rollNo: input.rollNo }
+        });
     } catch (error) {
         student = 'fail';
         response.message = error.parent.sqlMessage;
@@ -286,16 +271,13 @@ const getStudent = (async (req, res) => {
 });
 
 
-
-
 /**************************** DELETE STUDENT ****************************/
 
 // delete-student route handler
 const deleteStudent = (async (req, res) => {
+    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
     let input = req.params;
     let response = {};
-
-    if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Only admin has access to perform this operation' });
 
     const schema = Joi.object({
         rollNo: Joi.number().integer().required()
@@ -310,33 +292,27 @@ const deleteStudent = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
 
-
-
-    let query = `DELETE FROM students WHERE rollNo = ${input.rollNo};`;
-
     try {
-        let student = (await db.sequelize.query(`select rollNo, firstName, lastName, semester, departmentId from students where rollNo = ${input.rollNo}`))[0][0];
+        let student = await db.Student.findOne({
+            attributes: ['rollNo', 'firstName', 'lastName', 'semester', 'departmentId'],
+            where: { rollNo: input.rollNo }
+        });
         if(student) {
-            await db.sequelize.query(query);
-            response.message = 'Student deleted successfully';
+            await db.Student.destroy({ where: { rollNo: input.rollNo } });
+            response.message = 'Student deleted successfully.';
             responses.successResponseWithoutData(res, response.message, 1);
             try {
                 fs.unlinkSync(`public/profile-images/students/${student.profileImagePath}`);
             } catch (error) {}
         }
-        else {
-            response.message = `${input.rollNo}: Student does not exist.`;
-            responses.errorResponseWithoutData(res, response.message, 0, 200);
-        }
+        else throw 'invalid';
     } catch (error) {
-        response.message = error.parent.sqlMessage;
-        responses.errorResponseWithoutData(res, response.message, 400);
+        if(error === 'invalid') responses.errorResponseWithoutData(res, `Student does not exist.`, 400);
+        else responses.errorResponseWithoutData(res, error.parent.sqlMessage, 400);
     }
 });
 
-
 /************************************************************************/
-
 module.exports = { 
     addStudent, 
     editStudent, 

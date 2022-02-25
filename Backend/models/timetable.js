@@ -48,6 +48,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     }
   }, {
+    indexes: [
+      {
+        unique: true,
+        fields: ['departmentId', 'semester', 'lectureNo']
+      }
+    ],
     sequelize,
     modelName: 'Timetable',
     tableName: 'timetable',

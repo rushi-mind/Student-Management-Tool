@@ -2,6 +2,7 @@ const db = require('../../models');
 const Joi = require('joi');
 const responses = require('../responses');
 
+// function to count duration between two dates in days
 const getDateDifferenceInDays = async (dateFrom, dateTo) => {
     let duration = null;
     try {
@@ -35,14 +36,18 @@ module.exports = (async (req, res) => {
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     const duration = await getDateDifferenceInDays(dateFrom, dateTo);
-
-    let query = `INSERT INTO leaveApplications(studentId, dateFrom, dateTo, duration, reason, isApproved) VALUES(${req.student.id},"${dateFrom}", "${dateTo}", ${duration}, "${reason}", null);`;
-
     try {
-        await db.sequelize.query(query);
-        response.message = `Applied for leave from ${dateFrom} to ${dateTo}`;
+        await db.LeaveApplication.create({
+            studentId: req.student.id,
+            dateFrom,
+            dateTo,
+            duration,
+            reason
+        }, {
+            fields: ['studentId', 'dateFrom', 'dateTo', 'duration', 'reason']
+        });
+        response.message = `Applied for leave successfully from ${dateFrom} to ${dateTo}`;
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
         response.message = error.parent.sqlMessage;

@@ -50,7 +50,7 @@ const addAssignment = (async (req, res) => {
         }, {
             fields: ['name', 'semester', 'departmentId', 'deadline', 'filePath']
         });
-        response.message = 'Assignment inserted successfully';
+        response.message = 'Assignment inserted successfully.';
         responses.successResponseData(res, assignment, 1, response.message);
     } catch(error) {
         try {
@@ -63,8 +63,6 @@ const addAssignment = (async (req, res) => {
         responses.errorResponseWithoutData(res, response.message, response.code, response.status);
     }
 });
-
-
 
 /**************************** EDIT ASSIGNMENT ****************************/
 
@@ -96,12 +94,12 @@ const editAssignment = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-    let obj = (await db.sequelize.query(`select * from assignments where id = ${params.id};`))[0];
+    let obj = await db.Assignment.findOne({ where: { id: params.id } });
     if(!obj.length) {
         try {
             fs.unlinkSync(`public/assignments/${req.file.filename}`);
         } catch(error) {}
-        return responses.errorResponseWithoutData(res, 'Invalid assignment id', 0, 200);
+        return responses.errorResponseWithoutData(res, 'Invalid Assignment-ID', 0, 200);
     }
 
     let { name, deadline } = input;
@@ -118,15 +116,13 @@ const editAssignment = (async (req, res) => {
                 id: params.id
             }
         });
-        response.message = 'Assignment updated successfully';
+        response.message = 'Assignment updated successfully.';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
-
-
 
 /**************************** GET ASSIGNMENT ****************************/
 
@@ -148,18 +144,14 @@ const getAssignment = (async (req, res) => {
 
     let { id } = params;
     try {
-        let assignment = await db.Assignment.findOne({
-            where: { id }
-        });
-        if(!assignment) responses.errorResponseWithoutData(res, 'Invalid assignment id', 0, 200);
-        else responses.successResponseData(res, assignment, 1, 'Assignment fetcher successfully', null);
+        let assignment = await db.Assignment.findOne({ where: { id } });
+        if(!assignment) responses.errorResponseWithoutData(res, 'Invalid Assignment-ID', 0, 200);
+        else responses.successResponseData(res, assignment, 1, 'Assignment fetched successfully.', null);
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
-
-
 
 /**************************** DELETE ASSIGNMENT ****************************/
 
@@ -181,27 +173,23 @@ const deleteAssignment = (async (req, res) => {
 
     let assignment = null;
     try {
-        let result = (await db.sequelize.query(`select * from assignments where id = ${params.id};`))[0][0];
-        assignment = result;
+        assignment = await db.Assignment.findOne({ where: { id: params.id } }); 
     } catch (error) {}
-    if(!assignment) return responses.errorResponseWithoutData(res, 'Assignment not found', 0, 200);
+    if(!assignment) return responses.errorResponseWithoutData(res, 'Invalid Assignment-ID.', 0, 200);
 
     try {
         fs.unlinkSync(`public/assignments/${assignment.filePath}`)
     } catch (error) {}
 
     try {
-        await db.sequelize.query(`delete from assignments where id = ${params.id};`);
-        responses.successResponseWithoutData(res, 'Assignment deleted successfully', 1);
+        await db.Assignment.destroy({ where: { id: params.id } });
+        responses.successResponseWithoutData(res, 'Assignment deleted successfully.', 1);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
 
-
-
 /************************************************************************/
-
 module.exports = {
     addAssignment,
     editAssignment,

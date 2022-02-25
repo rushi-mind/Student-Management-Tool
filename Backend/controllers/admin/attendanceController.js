@@ -63,14 +63,12 @@ const fillAttendance = (async (req, res) => {
         .then(() => {});
         await db.Attendance.bulkCreate(absentStudentsObject, { fields: ['studentId', 'date', 'status'] })
         .then(() => {});
-        responses.successResponseWithoutData(res, "Attendace inserted successfully", 1);
+        responses.successResponseWithoutData(res, "Attendace filled successfully.", 1);
     } catch (error) {
         console.log(error);
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
-
-
 
 /**************************** CHECK ATTENDANCE ****************************/
 const checkAttendance = (async (req, res) => {
@@ -109,14 +107,13 @@ const checkAttendance = (async (req, res) => {
     `;
     try {
         let result = (await db.sequelize.query(query))[0];
-        if(result.length) responses.successResponseData(res, result, 1, 'Attendance fetched successfully', null);
-        else responses.successResponseData(res, result, 1, 'No data found', null);
+        if(result.length) responses.successResponseData(res, result, 1, 'Attendance fetched successfully.', null);
+        else responses.successResponseData(res, result, 1, 'No data found.', null);
     } catch (error) {
         console.log(error);
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
-
 
 /************************************************************************/
 module.exports = {

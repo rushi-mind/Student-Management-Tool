@@ -1,5 +1,4 @@
 const db = require('../../models');
-const bcrypt = require('bcrypt');
 const Joi = require('joi');
 const responses = require('../responses');
 
@@ -24,19 +23,22 @@ const getProfile = (async (req, res) => {
     }
     if (!isValid) return responses.validationErrorResponseData(res, response.message, 400);
 
-
-    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, profileImagePath FROM students WHERE rollNo = ${input.rollNo};`;
-
     try {
-        let result = (await db.sequelize.query(query))[0][0];
-        if (result) {
-            let department = (await db.sequelize.query(`select name from departments where id = ${result.departmentId};`))[0][0]['name'];
-            result.department = department;
+        let student = await db.Student.findOne({
+            attributes: ['rollNo', 'firstName', 'lastName', 'email', 'semester', 'departmentId', 'address', 'bloodGroup', 'profileImagePath'],
+            where: { rollNo: input.rollNo }
+        });
+        if(student) {
+            let department = await db.Department.findOne({
+                attributes: ['departmentCode', 'name'],
+                where: { id: student.departmentId }
+            });
+            student.dataValues.departmentName = department.name;
+            student.dataValues.departmentCode = department.departmentCode;
+            if (student.profileImagePath) student.profileImagePath = `http://192.168.1.169:5000/profile-images/students/${student.profileImagePath}`;
+            else student.dataValues.profileImagePath = `http://192.168.1.169:5000/profile-images/default.png`;
 
-            if (result.profileImagePath) result.profileImagePath = `http://192.168.1.169:5000/profile-images/students/${result.profileImagePath}`;
-            else result.profileImagePath = `http://192.168.1.169:5000/profile-images/default.png`;
-
-            responses.successResponseData(res, result, 1, 'Pfofile fetched successfully', null);
+            responses.successResponseData(res, { student }, 1, 'Pfofile fetched successfully', null);
         }
         else responses.errorResponseWithoutData(res, 'Invalid RollNo Entered', 0, 200);
     } catch (error) {
@@ -45,31 +47,28 @@ const getProfile = (async (req, res) => {
     }
 });
 
-
 /**************************** EDIT PROFILE IMAGE ****************************/
 
 // edit-profile-image handler
 const editProfileImage = (async (req, res) => {
     try {
-        db.sequelize.query(`update students set profileImagepath = "${req.file.filename}" where rollNo = ${req.student.rollNo};`);
+        await db.Student.update({ profileImagePath: req.file.filename }, { where: { rollNo: req.student.rollNo } });
         responses.successResponseWithoutData(res, 'Profile picture updated successfully', 1);
     } catch (error) {
-        console.log(error);
         responses.errorResponseWithoutData(res, 'Something went wrong. Please try again', 0, 200);
     }
 });
-
 
 /**************************** DELETE PROFILE IMAGE ****************************/
 
 // delete-profile-image handler
 const deleteProfileImage = (async (req, res) => {
     try {
-        db.sequelize.query(`update students set profileImagepath = null where rollNo = ${req.student.rollNo};`);
+        await db.Student.update({ profileImagePath: null }, { where: { rollNo: req.student.rollNo } });
         responses.successResponseWithoutData(res, 'Profile picture deleted successfully', 1);
     } catch (error) {
         console.log(error);
-        responses.errorResponseWithoutData(res, 'Something went wrong. Please try again', 0, 200);
+        responses.errorResponseWithoutData(res, 'Something went wrong. Please try again.', 0, 200);
     }
 });
 

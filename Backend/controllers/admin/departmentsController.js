@@ -16,7 +16,7 @@ const addDepartment = (async (req, res) => {
     let input = req.body;
     let response = {};
 
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Only admin has access to perform this operation', 0, 200);
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
 
     const schema = Joi.object({
         name: Joi.string().required(),
@@ -28,11 +28,10 @@ const addDepartment = (async (req, res) => {
         if(input.departmentCode.toString().length !== 3) throw '3';
     } catch (error) {
         isValidInput = false;
-        if(error == '3') response.message = `Department Code must be 3 digits only`;
+        if(error == '3') response.message = `Department Code must be 3 digits long only.`;
         else response.message = error.details[0]['message'];
     }
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
-
 
     let { name, departmentCode } = input;
     let departmentNameSlug = generateSulg(name);
@@ -45,14 +44,12 @@ const addDepartment = (async (req, res) => {
         }, {
             fields: ['name', 'departmentCode', 'departmentNameSlug']
         });
-        response.message = 'Department added successfully';
+        response.message = 'Department added successfully.';
         responses.successResponseWithoutData(res, response.message, 1);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
-
-
 
 /**************************** GET DEPARTMENTS ****************************/
 
@@ -60,15 +57,13 @@ const addDepartment = (async (req, res) => {
 const getDepartments = (async (req, res) => {
     let response = {};
     try {
-        let result = (await db.sequelize.query(`select * from departments;`))[0];
-        if(result.length) responses.successResponseData(res, result, 1, 'Departments fetched successfully', null);
-        else responses.successResponseData(res, result, 1, 'No departments found', null);
+        let result = await db.Department.findAll();
+        if(result.length) responses.successResponseData(res, result, 1, 'Departments fetched successfully.', null);
+        else responses.successResponseData(res, result, 1, 'Invalid Department-ID.', null);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 }); 
-
-
 
 /**************************** DELETE DEPARTMENT ****************************/
 
@@ -77,7 +72,7 @@ const deleteDepartment = (async (req, res) => {
     let params = req.params;
     let response = {};
 
-    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Only admin has access to perform this operation', 0, 200);
+    if(req.admin.role !== 'admin') return responses.errorResponseWithoutData(res, 'Access Denied.', 0, 200);
 
     const schema = Joi.object({
         id: Joi.number().integer().required()
@@ -93,10 +88,10 @@ const deleteDepartment = (async (req, res) => {
 
     let isValidId = true;
     try {
-        let department = (await db.sequelize.query(`select * from departments where id = ${params.id};`))[0][0];
+        let department = await db.Department.findOne({ where: { id: params.id } });
         if(!department) {
             isValidId = false;
-            response.message = 'Invalid department id';
+            response.message = 'Invalid Department-ID.';
         }
     } catch (error) {
         isValidId = false;
@@ -105,17 +100,14 @@ const deleteDepartment = (async (req, res) => {
     if(!isValidId) return responses.errorResponseWithoutData(res, response.message, 0, 200);
 
     try {
-        await db.sequelize.query(`delete from departments where id = ${params.id};`);
-        responses.successResponseWithoutData(res, 'Department deleted successfully', 1);
+        await db.Department.destroy({ where: {id: params.id } });
+        responses.successResponseWithoutData(res, 'Department deleted successfully.', 1);
     } catch (error) {
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });
 
-
-
 /************************************************************************/
-
 module.exports = {
     addDepartment,
     getDepartments,

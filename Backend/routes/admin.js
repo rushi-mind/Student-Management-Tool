@@ -84,7 +84,7 @@ router.delete('/delete-student/:rollNo', auth, deleteStudent);
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-teacher', [ auth, jsonParser ], addTeacher);
 router.put('/edit-teacher/:adminId', [ auth, jsonParser ], editTeacher);
-router.delete('/delete-teacher/:id', auth, deleteTeacher);
+router.delete('/delete-teacher/:adminId', auth, deleteTeacher);
 router.get('/get-teachers/:departmentId', auth, getTeachers);
 router.get('/get-teacher/:adminId', auth, getTeacher);
 
@@ -105,7 +105,7 @@ router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-timetable', [ auth, jsonParser ], addTimetable);
-router.put('/edit-timetable/:departmentId/:semester', auth, editTimetable);
+router.put('/edit-timetable/:departmentId/:semester', [ auth, jsonParser ], editTimetable);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/add-event', [ auth, uploadEventImage.single('image') ], addEvent);

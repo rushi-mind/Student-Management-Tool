@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const Joi = require('joi');
 const responses = require('../responses');
 
+/**************************** LOGIN ****************************/
 const login = (async (req, res) => {
     let input = req.body;
     let response = {};
@@ -21,14 +22,13 @@ const login = (async (req, res) => {
     }
     if(!isValid) return responses.validationErrorResponseData(res, response.message, 400);
 
-
     let student = null;
     try {
-        student = (await db.sequelize.query(`select * from students where rollNo = ${input.rollNo}`))[0][0];
+        student = await db.Student.findOne({ where: { rollNo: input.rollNo } });
     } catch (error) {
         console.log(error);
     }
-    if(!student) return responses.errorResponseWithoutData(res, 'Invalid RollNo entered', 0, 200);
+    if(!student) return responses.errorResponseWithoutData(res, 'Invalid Roll-No.', 0, 200);
 
     let isValidPassword = true;
     try {
@@ -36,7 +36,7 @@ const login = (async (req, res) => {
     } catch (error) {
         isValidPassword = false;
     }
-    if(!isValidPassword) return responses.validationErrorResponseData(res, 'Invalid Password', 400);
+    if(!isValidPassword) return responses.validationErrorResponseData(res, 'The password that you have entered is incorrect.', 400);
 
     let payload = {
         id: student.id, 
@@ -47,7 +47,7 @@ const login = (async (req, res) => {
     };
     const token = jwt.sign(payload, process.env.jwtPrivateKey);
 
-    responses.successResponseData(res, payload, 1, 'logged in', { token });
+    responses.successResponseData(res, payload, 1, 'Logged in successfully.', { token });
 });
 
 /**************************** CHANGE PASSWORD ****************************/
@@ -72,17 +72,22 @@ const changePassword = (async (req, res) => {
 
     let { oldPassword, newPassword } = input;
     
-    let actualPassword = (await db.sequelize.query(`select password from students where rollNo = ${req.student.rollNo};`))[0][0]['password'];
-    let isValidPassword = await bcrypt.compare(oldPassword, actualPassword);
+    let actualPassword = await db.Student.findOne({
+        attributes: ['password'],
+        where: { rollNo: req.student.rollNo }
+    });
+
+    let isValidPassword = await bcrypt.compare(oldPassword, actualPassword.password);
 
     if(isValidPassword) {
         let salt = await bcrypt.genSalt(10);
         let hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        let query = `update students set password = "${hashedPassword}" where rollNo = ${req.student.rollNo};`;
         try {
-            await db.sequelize.query(query);
-            response.message = 'Password updated successfully';
+            await db.Student.update({ password: hashedPassword }, 
+                { where: { rollNo: req.student.rollNo } 
+            });
+            response.message = 'Your password has been changed successfully.';
             responses.successResponseWithoutData(res, response.message, 1);
         } catch (error) {
             response.message = error.parent.sqlMessage;
@@ -90,7 +95,7 @@ const changePassword = (async (req, res) => {
         }
     }
     else {
-        return responses.validationErrorResponseData(res, 'Invalid Password Entered', 400);
+        return responses.validationErrorResponseData(res, 'Old password is wrong. Please enter correct old password.', 400);
     }
 });
 
