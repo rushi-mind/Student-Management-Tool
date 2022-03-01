@@ -13,7 +13,7 @@ const getDateDifferenceInDays = async (dateFrom, dateTo) => {
     return duration+1;
 }
 
-module.exports = (async (req, res) => {
+const applyForLeave = (async (req, res) => {
     let input = req.body;
     let response = {};
 
@@ -54,3 +54,21 @@ module.exports = (async (req, res) => {
         responses.errorResponseWithoutData(res, response.message, 0, 200);
     }
 });
+
+
+const getApplications = (async (req, res) => {
+    let studentId = req.student.id;
+    let filter = req.params.filter;
+    let data = null;
+
+    if(filter === 'all') data = await db.LeaveApplication.findAll({ where: { studentId } });
+    else if(filter === 'approved') data = await db.LeaveApplication.findAll({ where: { studentId, isApproved: 1 } });
+    else if(filter === 'rejected') data = await db.LeaveApplication.findAll({ where: { studentId, isApproved: 0 } });
+    else if(filter === 'pending') data = await db.LeaveApplication.findAll({ where: { studentId, isApproved: null } });
+    else return responses.errorResponseWithoutData(res, 'Invalid request parameter', 0, 200);
+
+    const totalRecords = data.length;
+    responses.successResponseData(res, data, 1, 'Leave Applications fetched successfully.', { totalRecords });
+});
+
+module.exports = { applyForLeave, getApplications };

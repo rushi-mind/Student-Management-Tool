@@ -17,9 +17,10 @@ const { addTeacher, editTeacher, getTeacher, getTeachers, deleteTeacher } = requ
 const { fillAttendance, checkAttendance } = require('../controllers/admin/attendanceController');
 const { addDepartment, getDepartments, deleteDepartment } = require('../controllers/admin/departmentsController');
 const { addAssignment, editAssignment, getAssignment, deleteAssignment } = require('../controllers/admin/assignmentsController');
+const { getApplications, approveOrRejectApplications } = require('../controllers/admin/leavesController');
 const { addTimetable, editTimetable } = require('../controllers/admin/timetablesController');
 const { addEvent, deleteEvent } = require('../controllers/admin/eventsController');
-const login = require('../controllers/admin/auth');
+const { login, changePassword } = require('../controllers/admin/auth');
 
 // -------------------------------------------------------------------------------------------------------------
 let assignmetnFileSotrage = multer.diskStorage({
@@ -104,6 +105,10 @@ router.post('/attendance', [ auth, jsonParser ], fillAttendance);
 router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
+router.get('/get-applications/:filter', [ auth ], getApplications);
+router.post('/approve-reject-applications', [ auth, jsonParser ], approveOrRejectApplications);
+
+// -------------------------------------------------------------------------------------------------------------
 router.post('/add-timetable', [ auth, jsonParser ], addTimetable);
 router.put('/edit-timetable/:departmentId/:semester', [ auth, jsonParser ], editTimetable);
 
@@ -113,5 +118,6 @@ router.delete('/delete-event/:id', auth, deleteEvent);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/login', [ urlencodedParser ], login);
+router.post('/change-password', [ auth, jsonParser ], changePassword);
 
 module.exports = router;
