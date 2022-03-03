@@ -10,6 +10,7 @@ module.exports = {
       },
       departmentId: {
         type: Sequelize.INTEGER,
+        onDelete: 'CASCADE',
         allowNull: false,
         references: {
           model: 'departments',

@@ -8,8 +8,6 @@ const bodyParser = require('body-parser');
 
 let upload = multer();
 let jsonParser = bodyParser.json();
-let urlencodedParser = bodyParser.urlencoded({ extended: false });
-
 
 // Importing route controllers
 const { addStudent, editStudent, getStudents, getStudent, deleteStudent } = require('../controllers/admin/studentsController');
@@ -20,7 +18,7 @@ const { addAssignment, editAssignment, getAssignment, deleteAssignment } = requi
 const { getApplications, approveOrRejectApplications } = require('../controllers/admin/leavesController');
 const { addTimetable, editTimetable } = require('../controllers/admin/timetablesController');
 const { addEvent, deleteEvent } = require('../controllers/admin/eventsController');
-const { login, changePassword } = require('../controllers/admin/auth');
+const { login, changePassword } = require('../controllers/admin/authController');
 
 // -------------------------------------------------------------------------------------------------------------
 let assignmetnFileSotrage = multer.diskStorage({
@@ -69,7 +67,8 @@ let eventImageStorage = multer.diskStorage({
             id = (await db.sequelize.query(`select id from events order by id desc limit 1`))[0][0];
         } catch (error) {}
         if(id) id = id.id;
-        cb(null, `${parseInt(id) + 1}${path.extname(file.originalname)}`);
+        if(!id) id = 0;
+        cb(null, `event-${parseInt(id) + 1}${path.extname(file.originalname)}`);
     }
 });
 const uploadEventImage = multer({ storage: eventImageStorage });
@@ -101,7 +100,7 @@ router.get('/get-assignment/:id', auth, getAssignment);
 router.delete('/delete-assignment/:id', auth, deleteAssignment);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/attendance', [ auth, jsonParser ], fillAttendance);
+router.post('/fill-attendance', [ auth, jsonParser ], fillAttendance);
 router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 
 // -------------------------------------------------------------------------------------------------------------
@@ -117,7 +116,7 @@ router.post('/add-event', [ auth, uploadEventImage.single('image') ], addEvent);
 router.delete('/delete-event/:id', auth, deleteEvent);
 
 // -------------------------------------------------------------------------------------------------------------
-router.post('/login', [ urlencodedParser ], login);
+router.post('/login', [ upload.array() ], login);
 router.post('/change-password', [ auth, jsonParser ], changePassword);
 
 module.exports = router;

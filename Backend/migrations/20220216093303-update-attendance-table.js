@@ -18,11 +18,7 @@ module.exports = {
     return Promise.all([
       queryInterface.removeConstraint(
         'attendance',
-        {
-          fields: ['studentId', 'date'],
-          type: 'unique',
-          name: 'unique_studentId_date'
-        }
+        'unique_studentId_date'
       )
     ]);
   }

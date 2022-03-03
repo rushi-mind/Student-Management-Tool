@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
     imagePath: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     sequelize,

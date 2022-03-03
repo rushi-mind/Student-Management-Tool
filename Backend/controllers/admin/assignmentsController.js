@@ -38,7 +38,7 @@ const addAssignment = (async (req, res) => {
     let { name, deadline } = input;
     let { semester, departmentId } = params;
     let filePath = null;
-    if(req.file) filePath = `http://192.168.1.169:5000/assignments/${req.file.filename}`;
+    if(req.file) filePath = `${req.file.filename}`;
     
     try {
         let assignment = await db.Assignment.create({
@@ -104,7 +104,7 @@ const editAssignment = (async (req, res) => {
 
     let { name, deadline } = input;
     let filePath = null;
-    if(req.file) filePath = `http://192.168.1.169:5000/assignments/${req.file.filename}`;
+    if(req.file) filePath = `${req.file.filename}`;
 
     try {
         await db.Assignment.update({
@@ -178,7 +178,7 @@ const deleteAssignment = (async (req, res) => {
     if(!assignment) return responses.errorResponseWithoutData(res, 'Invalid Assignment-ID.', 0, 200);
 
     try {
-        fs.unlinkSync(`public/assignments/${assignment.filePath}`)
+        fs.unlinkSync(`public/assignments/${assignment.filePath}`);
     } catch (error) {}
 
     try {

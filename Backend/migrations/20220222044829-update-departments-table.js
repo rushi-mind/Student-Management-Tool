@@ -44,19 +44,11 @@ module.exports = {
       ),
       queryInterface.removeConstraint(
         'departments',
-        {
-          fields: ['departmentCode'],
-          type: 'unique',
-          name: 'unique_departmentCode'
-        }
+        'unique_departmentCode'
       ),
       queryInterface.removeConstraint(
         'departments',
-        {
-          fields: ['departmentNameSlug'],
-          type: 'unique',
-          name: 'unique_departmentNameSlug'
-        }
+        'unique_departmentNameSlug'
       )
     ]);
   }

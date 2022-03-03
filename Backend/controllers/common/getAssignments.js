@@ -31,6 +31,11 @@ module.exports = (async (req, res) => {
             where:{ semester, departmentId },
         });
         let totalRecords = assignments.length;
+
+        assignments.map((cur) => {
+            cur.filePath = `${process.env.URL}/assignments/${cur.filePath}`;
+        });
+
         if(assignments.length) responses.successResponseData(res, assignments, 1, 'Assignments fetched successfully', { totalRecords });
         else responses.successResponseWithoutData(res, 'No Data Found.', 1);
     } catch (error) {

@@ -59,13 +59,11 @@ const fillAttendance = (async (req, res) => {
     });
 
     try {
-        await db.Attendance.bulkCreate(presentStudentsObject, { fields: ['studentId', 'date', 'status'] })
-        .then(() => {});
-        await db.Attendance.bulkCreate(absentStudentsObject, { fields: ['studentId', 'date', 'status'] })
-        .then(() => {});
+        await db.Attendance.bulkCreate(presentStudentsObject, { fields: ['studentId', 'date', 'status'] });
+        await db.Attendance.bulkCreate(absentStudentsObject, { fields: ['studentId', 'date', 'status'] });
         responses.successResponseWithoutData(res, "Attendace filled successfully.", 1);
     } catch (error) {
-        console.log(error);
+        // console.log(error);
         responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
     }
 });

@@ -14,7 +14,8 @@ const addEvent = (async (req, res) => {
 
     const schema = Joi.object({
         name: Joi.string().required(),
-        date: Joi.date().required()
+        date: Joi.date().required(),
+        description: Joi.string().required()
     });
     let isValidInput = true;
     try {
@@ -26,12 +27,13 @@ const addEvent = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, 400);
 
 
-    let { name, date } = input;
+    let { name, date, description } = input;
     try {
         let event = await db.Event.create({
             name,
             date,
-            imagePath: req.file.filename
+            imagePath: req.file.filename,
+            description
         });
         responses.successResponseData(res, event, 1, 'Event added successfully.', null);
     } catch (error) {

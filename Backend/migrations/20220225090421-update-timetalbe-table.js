@@ -17,7 +17,7 @@ module.exports = {
   async down (queryInterface, Sequelize) {
     return Promise.all([
       queryInterface.removeConstraint(
-        'timetable', { name: 'unique_deptId_sem_lecNo' }
+        'timetable', 'unique_deptId_sem_lecNo'
       )
     ]);
   }

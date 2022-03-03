@@ -1,3 +1,4 @@
+// require('dotenv').config();
 const db = require('../../models');
 const bcrypt = require('bcrypt');
 const Joi = require('joi');
@@ -220,10 +221,13 @@ const getStudents = (async (req, res) => {
 
     let { departmentId, semester } = params;
 
-    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sortBy} ${sortType} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
+    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, CONCAT('${process.env.URL}profile-images/students/',profileImagePath) AS profileImage FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sortBy} ${sortType} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
 
     try {
         const students = (await db.sequelize.query(query))[0];
+        students.map((cur) => {
+            if(!cur.profileImage) cur.profileImage = `${process.env.URL}profile-images/default.png`;
+        });
         const totalRecords = (await db.sequelize.query(`select count(id) as total from students where semester = ${semester} and departmentId = ${departmentId};`))[0][0]['total'];
         if(students.length) response.message = `Students fetched successfully.`;
         else response.message = `Data not found.`;
@@ -257,15 +261,13 @@ const getStudent = (async (req, res) => {
     let student = null;
     try {
         student = await db.Student.findOne({
-            attributes: ['id', 'rollNo', 'firstName', 'lastName', 'email', 'semester', 'departmentId', 'address', 'bloodGroup'],
+            attributes: ['id', 'rollNo', 'firstName', 'lastName', 'email', 'semester', 'departmentId', 'address', 'bloodGroup', 'profileImagePath'],
             where: { rollNo: input.rollNo }
         });
-    } catch (error) {
-        student = 'fail';
-        response.message = error.parent.sqlMessage;
-    }
+        if(!student) throw 'invalid';
+        if(!student.profileImagePath) student.profileImagePath = `${process.env.URL}profile-images/default.png`;
+    } catch (error) {}
     if(!student) return responses.errorResponseWithoutData(res, 'Invalid RollNo', 0, 200);
-    if(student === 'fail') return responses.errorResponseWithoutData(res, response.message, 0, 200);
 
     responses.successResponseData(res, student, 1, 'Student fetched successfully', null);
 });
