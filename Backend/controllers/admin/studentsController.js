@@ -34,7 +34,9 @@ const getSrNo = async (semester, departmentId) => {
                 departmentId
             }
         });
+        console.log(temp);
         srNo = temp.dataValues.total + 1;
+        console.log(srNo);
     } catch (error) {}
     return srNo;
 }
@@ -53,13 +55,15 @@ const addStudent = (async (req, res) => {
     let input = req.body;
     let response = {};
 
+    console.log('body', input);
+
     if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Access Denied.' });
 
     const schema = Joi.object({
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         joiningYear: Joi.number().integer().required(),
-        semester: Joi.number().integer().min(1).max(8),
+        semester: Joi.number().integer().min(1).max(8).required(),
         departmentId: Joi.number().integer().min(1),
         address: Joi.string().required(),
         bloodGroup: Joi.string().required()
@@ -108,6 +112,8 @@ const addStudent = (async (req, res) => {
         response.message = 'Student added successfully.';
         response.code = 1;
         student.departmentCode = departmentCode;
+        delete student.departmentId;
+        delete student.password;
         responses.successResponseData(res, { student }, 1, response.message);
     } catch(error) {
         response.message = error.parent.sqlMessage;
