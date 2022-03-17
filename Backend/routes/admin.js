@@ -12,7 +12,7 @@ let jsonParser = bodyParser.json();
 // Importing route controllers
 const { addStudent, editStudent, getStudents, getStudent, deleteStudent } = require('../controllers/admin/studentsController');
 const { addTeacher, editTeacher, getTeacher, getTeachers, deleteTeacher } = require('../controllers/admin/teachersController');
-const { fillAttendance, checkAttendance } = require('../controllers/admin/attendanceController');
+const { getStudentsList, fillAttendance, checkAttendance } = require('../controllers/admin/attendanceController');
 const { addDepartment, getDepartments, deleteDepartment } = require('../controllers/admin/departmentsController');
 const { addAssignment, editAssignment, getAssignment, deleteAssignment } = require('../controllers/admin/assignmentsController');
 const { getApplications, approveOrRejectApplications } = require('../controllers/admin/leavesController');
@@ -100,6 +100,7 @@ router.get('/get-assignment/:id', auth, getAssignment);
 router.delete('/delete-assignment/:id', auth, deleteAssignment);
 
 // -------------------------------------------------------------------------------------------------------------
+router.get('/get-students-list/:departmentId/:semester', auth, getStudentsList);
 router.post('/fill-attendance', [ auth, jsonParser ], fillAttendance);
 router.get('/check-attendance/:departmentId/:semester', auth, checkAttendance);
 

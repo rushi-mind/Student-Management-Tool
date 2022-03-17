@@ -227,12 +227,12 @@ const getStudents = (async (req, res) => {
 
     let { departmentId, semester } = params;
 
-    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, CONCAT('${process.env.URL}profile-images/students/',profileImagePath) AS profileImage FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sortBy} ${sortType} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
+    let query = `SELECT rollNo, firstName, lastName, email, semester, departmentId, address, bloodGroup, CONCAT('${process.env.URL}/profile-images/students/',profileImagePath) AS profileImage FROM students WHERE semester = ${semester} AND departmentId = ${departmentId} ORDER BY ${sortBy} ${sortType} LIMIT ${pageSize} OFFSET ${pageSize*(pageNumber-1)};`;
 
     try {
         const students = (await db.sequelize.query(query))[0];
         students.map((cur) => {
-            if(!cur.profileImage) cur.profileImage = `${process.env.URL}profile-images/default.png`;
+            if(!cur.profileImage) cur.profileImage = `${process.env.URL}/profile-images/default.png`;
         });
         const totalRecords = (await db.sequelize.query(`select count(id) as total from students where semester = ${semester} and departmentId = ${departmentId};`))[0][0]['total'];
         if(students.length) response.message = `Students fetched successfully.`;
@@ -271,7 +271,8 @@ const getStudent = (async (req, res) => {
             where: { rollNo: input.rollNo }
         });
         if(!student) throw 'invalid';
-        if(!student.profileImagePath) student.profileImagePath = `${process.env.URL}profile-images/default.png`;
+        if(!student.profileImagePath) student.profileImagePath = `${process.env.URL}/profile-images/default.png`;
+        else student.dataValues.profileImagePath = `${process.env.URL}/profile-images/students/${student.profileImagePath}`;
     } catch (error) {}
     if(!student) return responses.errorResponseWithoutData(res, 'Invalid RollNo', 0, 200);
 
@@ -310,7 +311,7 @@ const deleteStudent = (async (req, res) => {
             response.message = 'Student deleted successfully.';
             responses.successResponseWithoutData(res, response.message, 1);
             try {
-                fs.unlinkSync(`public/profile-images/students/${student.profileImagePath}`);
+                fs.unlink(`public/profile-images/students/${student.profileImagePath}`, (err) => {});
             } catch (error) {}
         }
         else throw 'invalid';

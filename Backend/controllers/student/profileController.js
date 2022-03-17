@@ -1,6 +1,7 @@
 const db = require('../../models');
 const Joi = require('joi');
 const responses = require('../responses');
+const fs = require('fs');
 
 /**************************** GET PROFILE ****************************/
 
@@ -35,10 +36,10 @@ const getProfile = (async (req, res) => {
             });
             student.dataValues.departmentName = department.name;
             student.dataValues.departmentCode = department.departmentCode;
-            if (student.profileImagePath) student.profileImagePath = `http://192.168.1.169:5000/profile-images/students/${student.profileImagePath}`;
-            else student.dataValues.profileImagePath = `http://192.168.1.169:5000/profile-images/default.png`;
+            if (student.profileImagePath) student.profileImagePath = `${process.env.URL}/profile-images/students/${student.profileImagePath}`;
+            else student.dataValues.profileImagePath = `${process.env.URL}/profile-images/default.png`;
 
-            responses.successResponseData(res, { student }, 1, 'Pfofile fetched successfully', null);
+            responses.successResponseData(res, { student }, 1, 'Profile fetched successfully', null);
         }
         else responses.errorResponseWithoutData(res, 'Invalid RollNo Entered', 0, 200);
     } catch (error) {
@@ -64,7 +65,12 @@ const editProfileImage = (async (req, res) => {
 // delete-profile-image handler
 const deleteProfileImage = (async (req, res) => {
     try {
+        let profileImage = (await db.Student.findOne({
+            attributes: ['profileImagePath'],
+            where: { rollNo: req.student.rollNo }
+        })).profileImagePath;
         await db.Student.update({ profileImagePath: null }, { where: { rollNo: req.student.rollNo } });
+        fs.unlink(`public/profile-images/students/${profileImage}`, (err) => {});
         responses.successResponseWithoutData(res, 'Profile picture deleted successfully', 1);
     } catch (error) {
         console.log(error);

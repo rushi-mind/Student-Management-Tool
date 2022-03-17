@@ -2,6 +2,27 @@ const db = require('../../models');
 const Joi = require('joi');
 const responses = require('../responses');
 
+/**************************** GET LIST ****************************/
+
+// get-students-list
+const getStudentsList = (async (req, res) => {
+    let { departmentId, semester } = req.params;
+    try {
+        let list = await db.Student.findAll({
+            attributes: [
+                'id', 'rollNo', 
+                [db.Sequelize.fn('concat', db.Sequelize.col('firstName'), ' ', db.Sequelize.col('lastName')), 'name']
+            ],
+            where: { departmentId, semester }
+        });
+        res.send(list);
+    } catch (error) {
+        res.send('error');
+        console.log(error);
+    }
+})
+
+
 /**************************** FILL ATTENDANCE ****************************/
 
 // fill-attendance route handler
@@ -115,6 +136,7 @@ const checkAttendance = (async (req, res) => {
 
 /************************************************************************/
 module.exports = {
+    getStudentsList,
     fillAttendance,
     checkAttendance
 };

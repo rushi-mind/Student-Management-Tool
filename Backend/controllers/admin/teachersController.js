@@ -212,7 +212,9 @@ const getTeachers = (async (req, res) => {
 
     let { departmentId } = params;
     try {
-        const teachers = await db.Admin.findAll({ where: { departmentId } });
+        const teachers = await db.Admin.findAll({ 
+            attributes: ['_id', 'adminId', 'name', 'email', 'departmentId'], 
+            where: { departmentId } });
         const totalRecords = teachers.length;
         responses.successResponseData(res, teachers, 1, 'Teachers fetched successfully.', { totalRecords });
     } catch (error) {

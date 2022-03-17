@@ -1,7 +1,7 @@
 // Importing required dependencies and files
 const router = require('express').Router();
 const auth = require('../middlewares/auth-student');
-var path = require('path');
+let path = require('path');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 
@@ -30,7 +30,7 @@ const uploadImage = multer({ storage });
 router.get('/get-profile/:rollNo', auth, getProfile);
 router.put('/edit-profile-image', [ auth, uploadImage.single('image') ], editProfileImage);
 router.put('/change-password/:rollNo', [ auth, jsonParser ], changePassword);
-router.delete('/delete-profile-image/:rollNo', auth, deleteProfileImage);
+router.delete('/delete-profile-image', auth, deleteProfileImage);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/leave-application', [ auth, jsonParser ], applyForLeave);

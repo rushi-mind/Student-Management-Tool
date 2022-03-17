@@ -102,7 +102,7 @@ const changePassword = (async (req, res) => {
         }
     }
     else {
-        return responses.validationErrorResponseData(res, 'Old password is wrong. Please enter correct old password.', 400);
+        return responses.errorResponseWithoutData(res, 'Old password is wrong. Please enter correct old password.', 0, 200);
     }
 });
 

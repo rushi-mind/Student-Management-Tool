@@ -11,6 +11,9 @@ module.exports = (req, res, next) => {
         req.admin = decoded;
         next();
     } catch (error) {
-        responses.validationErrorResponseData(res, 'Invalid Auth Token', 400);
+        res.status(401).send({
+            message: 'Invalid Auth Token',
+            code: -1
+        });
     } 
 }

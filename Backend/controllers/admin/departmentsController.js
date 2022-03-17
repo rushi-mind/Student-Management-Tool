@@ -57,7 +57,9 @@ const addDepartment = (async (req, res) => {
 const getDepartments = (async (req, res) => {
     let response = {};
     try {
-        let result = await db.Department.findAll();
+        let result = await db.Department.findAll({
+            attributes: ['id', 'name', 'departmentCode']
+        });
         if(result.length) responses.successResponseData(res, result, 1, 'Departments fetched successfully.', null);
         else responses.successResponseData(res, result, 1, 'Invalid Department-ID.', null);
     } catch (error) {

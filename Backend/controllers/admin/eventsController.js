@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const db = require('../../models');
 const responses = require('../responses');
+const fs = require('fs');
 
 /**************************** ADD EVENT ****************************/
 
@@ -65,8 +66,9 @@ const deleteEvent = (async (req, res) => {
     if(!isValidInput) return responses.validationErrorResponseData(res, response.message, response.code);
 
     let isValidId = true;
+    let event = null;
     try {
-        let event = await db.Event.findOne({ where: { id: params.id } });
+        event = await db.Event.findOne({ where: { id: params.id } });
         if(!event) {
             isValidId = false;
             response.message = 'Invalid Event-ID.';
@@ -79,9 +81,11 @@ const deleteEvent = (async (req, res) => {
 
     try {
         await db.Event.destroy({ where: { id: params.id } });
+        fs.unlink(`public/event-images/${event.imagePath}`, (err) => {});
         responses.successResponseWithoutData(res, 'Event deleted successfully.', 1);
     } catch (error) {
-        responses.errorResponseWithoutData(res, error.parent.sqlMessage, 0, 200);
+        console.log(error);
+        responses.errorResponseWithoutData(res, `Something went wrong. Please try again.`, 0, 200);
     }
 });
 
