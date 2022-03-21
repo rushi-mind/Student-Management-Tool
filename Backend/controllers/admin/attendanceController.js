@@ -15,7 +15,9 @@ const getStudentsList = (async (req, res) => {
             ],
             where: { departmentId, semester }
         });
-        res.send(list);
+        let totalRecords = list.length;
+        if(!totalRecords) responses.successResponseWithoutData(res, 'No Data Found.', 1);
+        else responses.successResponseData(res, list, 1, 'Students fetched successfully.', { totalRecords });
     } catch (error) {
         res.send('error');
         console.log(error);

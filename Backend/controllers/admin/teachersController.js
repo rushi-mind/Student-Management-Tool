@@ -216,7 +216,8 @@ const getTeachers = (async (req, res) => {
             attributes: ['_id', 'adminId', 'name', 'email', 'departmentId'], 
             where: { departmentId } });
         const totalRecords = teachers.length;
-        responses.successResponseData(res, teachers, 1, 'Teachers fetched successfully.', { totalRecords });
+        if(totalRecords === 0) responses.successResponseWithoutData(res, "Teachers not found.", 1);
+        else responses.successResponseData(res, teachers, 1, 'Teachers fetched successfully.', { totalRecords });
     } catch (error) {
         response.message = error.parent.sqlMessage;
         responses.errorResponseWithoutData(res, response.message, 0, 200);
