@@ -32,7 +32,7 @@ const login = (async (req, res) => {
 
     if(adminId) {
         adminId = parseInt(adminId);
-        if(!adminId) return responses.validationErrorResponseData(res, `Wrong credential. Please correct and try again.`, 400);
+        if(!adminId) return responses.errorResponseWithoutData(res, `Wrong credential. Please correct and try again.`, 0, 200);
     }
 
     let admin = null;

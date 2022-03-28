@@ -118,6 +118,6 @@ router.delete('/delete-event/:id', auth, deleteEvent);
 
 // -------------------------------------------------------------------------------------------------------------
 router.post('/login', [ upload.array() ], login);
-router.post('/change-password', [ auth, jsonParser ], changePassword);
+router.put('/change-password', [ auth, jsonParser ], changePassword);
 
 module.exports = router;

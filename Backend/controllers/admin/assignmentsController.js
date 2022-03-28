@@ -144,7 +144,18 @@ const getAssignment = (async (req, res) => {
 
     let { id } = params;
     try {
-        let assignment = await db.Assignment.findOne({ where: { id } });
+        // let assignment = (await db.sequelize.query(`select * from assignments where id = ${id}`))[0][0];
+        let assignment = await db.Assignment.findAll({
+            attributes: [
+                'id',
+                'name',
+                'semester',
+                'departmentId',
+                'deadline',
+                'filePath'
+            ],
+             where: { id } });
+        console.log(assignment);
         if(!assignment) responses.errorResponseWithoutData(res, 'Invalid Assignment-ID', 0, 200);
         else responses.successResponseData(res, assignment, 1, 'Assignment fetched successfully.', null);
     } catch (error) {

@@ -23,7 +23,7 @@ const applyForLeave = (async (req, res) => {
     const schema = Joi.object({
         date: Joi.object({
             from: Joi.date().greater('now').required(),
-            to: Joi.date().greater(Joi.ref('from')).required()
+            to: Joi.date().min(Joi.ref('from')).required()
         }).required(),
         reason: Joi.string().required()
     });

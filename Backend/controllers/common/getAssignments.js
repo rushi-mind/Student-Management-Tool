@@ -22,6 +22,7 @@ module.exports = (async (req, res) => {
     try {
         let assignments = await db.Assignment.findAll({
             attributes: [
+                'id',
                 'name',
                 'semester',
                 'departmentId',

@@ -34,9 +34,7 @@ const getSrNo = async (semester, departmentId) => {
                 departmentId
             }
         });
-        console.log(temp);
         srNo = temp.dataValues.total + 1;
-        console.log(srNo);
     } catch (error) {}
     return srNo;
 }
@@ -54,8 +52,6 @@ const generateRollNo = (year, departmentCode, srNo) => {
 const addStudent = (async (req, res) => {
     let input = req.body;
     let response = {};
-
-    console.log('body', input);
 
     if(req.admin.role !== 'admin') return res.status(403).send({ status: 'fail', message: 'Access Denied.' });
 

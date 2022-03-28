@@ -36,7 +36,7 @@ const login = (async (req, res) => {
     } catch (error) {
         isValidPassword = false;
     }
-    if(!isValidPassword) return responses.validationErrorResponseData(res, 'The password that you have entered is incorrect.', 400);
+    if(!isValidPassword) return responses.errorResponseWithoutData(res, 'The password that you have entered is incorrect.', 0, 200);
 
     let payload = {
         id: student.id, 
@@ -95,7 +95,7 @@ const changePassword = (async (req, res) => {
         }
     }
     else {
-        return responses.validationErrorResponseData(res, 'Old password is wrong. Please enter correct old password.', 400);
+        return responses.errorResponseWithoutData(res, 'Old password is wrong. Please enter correct old password.', 0, 200);
     }
 });
 
