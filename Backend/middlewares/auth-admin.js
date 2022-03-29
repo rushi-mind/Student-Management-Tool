@@ -13,6 +13,7 @@ module.exports = (req, res, next) => {
     } catch (error) {
         res.status(401).send({
             message: 'Invalid Auth Token',
+            temp: 'temp',
             code: -1
         });
     } 

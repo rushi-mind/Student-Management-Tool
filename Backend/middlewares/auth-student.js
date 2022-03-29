@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.jwtPrivateKey);
         if(!decoded.rollNo) throw 'error';
         let student = await db.Student.findOne({ where: { rollNo: decoded.rollNo } });
-        if(!student) throw 'error';
+        // if(!student) throw 'error';
         req.student = student;
         next();
     } catch (error) {
